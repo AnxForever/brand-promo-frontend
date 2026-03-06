@@ -1,16 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Form, Input, Button, Card, message, Typography } from 'antd';
+import { Form, Input, Button, App } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { authApi } from '../../api';
 import { useAuthStore } from '../../store/authStore';
-
-const { Title } = Typography;
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const login = useAuthStore((s) => s.login);
+  const { message } = App.useApp();
 
   const onFinish = async (values: { username: string; password: string }) => {
     setLoading(true);
@@ -18,49 +17,71 @@ export default function LoginPage() {
       const res = await authApi.login(values);
       if (res.success) {
         login(res.data);
-        message.success('Login successful');
+        message.success('登录成功');
         navigate('/dashboard');
       } else {
-        message.error(res.message || 'Login failed');
+        message.error(res.message || '登录失败');
       }
     } catch {
-      message.error('Login failed');
+      message.error('登录失败');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        background: '#f0f2f5',
-      }}
-    >
-      <Card style={{ width: 400, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-        <Title level={3} style={{ textAlign: 'center', marginBottom: 32 }}>
-          Brand Promotion System
-        </Title>
-        <Form onFinish={onFinish} size="large">
-          <Form.Item name="username" rules={[{ required: true, message: 'Please enter username' }]}>
-            <Input prefix={<UserOutlined />} placeholder="Username" />
-          </Form.Item>
-          <Form.Item name="password" rules={[{ required: true, message: 'Please enter password' }]}>
-            <Input.Password prefix={<LockOutlined />} placeholder="Password" />
-          </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading} block>
-              Login
-            </Button>
-          </Form.Item>
-        </Form>
-        <div style={{ textAlign: 'center', color: '#999', fontSize: 12 }}>
-          Default admin: admin / admin123
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
+      <div className="w-full max-w-[400px]">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-600 text-white text-lg font-bold mb-4">
+              BP
+            </div>
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+              品牌推广管理系统
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              请登录您的账号
+            </p>
+          </div>
+
+          <Form onFinish={onFinish} size="large" layout="vertical">
+            <Form.Item
+              name="username"
+              rules={[{ required: true, message: '请输入用户名' }]}
+            >
+              <Input
+                prefix={<UserOutlined className="text-slate-400" />}
+                placeholder="用户名"
+              />
+            </Form.Item>
+            <Form.Item
+              name="password"
+              rules={[{ required: true, message: '请输入密码' }]}
+            >
+              <Input.Password
+                prefix={<LockOutlined className="text-slate-400" />}
+                placeholder="密码"
+              />
+            </Form.Item>
+            <Form.Item className="mb-2">
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+                block
+                className="h-10 font-medium"
+              >
+                登 录
+              </Button>
+            </Form.Item>
+          </Form>
+
+          <p className="text-xs text-slate-400 text-center mt-4">
+            默认账号: admin / admin123
+          </p>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

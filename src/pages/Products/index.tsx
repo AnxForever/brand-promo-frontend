@@ -8,9 +8,9 @@ import {
   Form,
   InputNumber,
   Select,
-  message,
   Popconfirm,
   Tag,
+  App,
 } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { productApi } from '../../api';
@@ -24,11 +24,16 @@ export default function ProductsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form] = Form.useForm();
+  const { message } = App.useApp();
 
   const fetchData = async (p = page, kw = keyword) => {
     setLoading(true);
     try {
-      const res = await productApi.list({ page: p, size: 10, keyword: kw || undefined });
+      const res = await productApi.list({
+        page: p,
+        size: 10,
+        keyword: kw || undefined,
+      });
       if (res.success) {
         setData(res.data.list);
         setTotal(res.data.total);
@@ -38,7 +43,9 @@ export default function ProductsPage() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const handleSearch = () => {
     setPage(1);
@@ -59,7 +66,7 @@ export default function ProductsPage() {
 
   const handleDelete = async (id: number) => {
     await productApi.delete(id);
-    message.success('Deleted');
+    message.success('删除成功');
     fetchData();
   };
 
@@ -67,38 +74,53 @@ export default function ProductsPage() {
     const values = await form.validateFields();
     if (editingId) {
       await productApi.update(editingId, values);
-      message.success('Updated');
+      message.success('更新成功');
     } else {
       await productApi.create(values);
-      message.success('Created');
+      message.success('创建成功');
     }
     setModalOpen(false);
     fetchData();
   };
 
   const columns = [
-    { title: 'ID', dataIndex: 'id', width: 60 },
-    { title: 'Name', dataIndex: 'name' },
-    { title: 'Category', dataIndex: 'category' },
+    { title: 'ID', dataIndex: 'id', width: 70 },
+    { title: '商品名称', dataIndex: 'name', ellipsis: true },
+    { title: '分类', dataIndex: 'category', width: 120 },
     {
-      title: 'Price',
+      title: '价格',
       dataIndex: 'price',
-      render: (v: number) => v != null ? `$${v.toFixed(2)}` : '-',
+      width: 100,
+      render: (v: number) => (v != null ? `¥${v.toFixed(2)}` : '-'),
     },
     {
-      title: 'Status',
+      title: '状态',
       dataIndex: 'status',
+      width: 100,
       render: (v: number) => (
-        <Tag color={v === 1 ? 'green' : 'red'}>{v === 1 ? 'On Shelf' : 'Off Shelf'}</Tag>
+        <Tag
+          color={v === 1 ? 'success' : 'error'}
+          className="rounded-md"
+        >
+          {v === 1 ? '上架' : '下架'}
+        </Tag>
       ),
     },
     {
-      title: 'Actions',
+      title: '操作',
+      width: 160,
       render: (_: any, record: any) => (
-        <Space>
-          <Button size="small" onClick={() => handleEdit(record)}>Edit</Button>
-          <Popconfirm title="Delete this product?" onConfirm={() => handleDelete(record.id)}>
-            <Button size="small" danger>Delete</Button>
+        <Space size="small">
+          <Button size="small" onClick={() => handleEdit(record)}>
+            编辑
+          </Button>
+          <Popconfirm
+            title="确认删除该商品？"
+            onConfirm={() => handleDelete(record.id)}
+          >
+            <Button size="small" danger>
+              删除
+            </Button>
           </Popconfirm>
         </Space>
       ),
@@ -107,62 +129,87 @@ export default function ProductsPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Space>
-          <Input
-            placeholder="Search products..."
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            onPressEnter={handleSearch}
-            style={{ width: 250 }}
-          />
-          <Button icon={<SearchOutlined />} onClick={handleSearch}>Search</Button>
-        </Space>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          Add Product
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          商品管理
+        </h1>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={handleAdd}
+          className="font-medium"
+        >
+          新增商品
         </Button>
       </div>
 
-      <Table
-        columns={columns}
-        dataSource={data}
-        rowKey="id"
-        loading={loading}
-        pagination={{
-          current: page,
-          total,
-          pageSize: 10,
-          onChange: (p) => { setPage(p); fetchData(p); },
-        }}
-      />
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="mb-4">
+          <Space>
+            <Input
+              placeholder="搜索商品..."
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              onPressEnter={handleSearch}
+              className="w-64"
+            />
+            <Button icon={<SearchOutlined />} onClick={handleSearch}>
+              搜索
+            </Button>
+          </Space>
+        </div>
+
+        <Table
+          columns={columns}
+          dataSource={data}
+          rowKey="id"
+          loading={loading}
+          pagination={{
+            current: page,
+            total,
+            pageSize: 10,
+            showTotal: (t) => `共 ${t} 条`,
+            onChange: (p) => {
+              setPage(p);
+              fetchData(p);
+            },
+          }}
+        />
+      </div>
 
       <Modal
-        title={editingId ? 'Edit Product' : 'Add Product'}
+        title={editingId ? '编辑商品' : '新增商品'}
         open={modalOpen}
         onOk={handleSubmit}
         onCancel={() => setModalOpen(false)}
-        destroyOnClose
+        destroyOnHidden
       >
-        <Form form={form} layout="vertical">
-          <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-            <Input />
+        <Form form={form} layout="vertical" className="mt-4">
+          <Form.Item name="name" label="商品名称" rules={[{ required: true, message: '请输入商品名称' }]}>
+            <Input placeholder="请输入商品名称" />
           </Form.Item>
-          <Form.Item name="category" label="Category">
+          <Form.Item name="category" label="分类">
             <Select
               allowClear
+              placeholder="请选择分类"
               options={[
-                { value: 'Electronics', label: 'Electronics' },
-                { value: 'Fashion', label: 'Fashion' },
-                { value: 'Food', label: 'Food' },
-                { value: 'Sports', label: 'Sports' },
+                { value: 'Electronics', label: '电子产品' },
+                { value: 'Fashion', label: '时尚服饰' },
+                { value: 'Food', label: '食品' },
+                { value: 'Sports', label: '运动户外' },
               ]}
             />
           </Form.Item>
-          <Form.Item name="price" label="Price">
-            <InputNumber min={0} precision={2} style={{ width: '100%' }} />
+          <Form.Item name="price" label="价格">
+            <InputNumber
+              min={0}
+              precision={2}
+              placeholder="0.00"
+              className="w-full"
+            />
           </Form.Item>
-          <Form.Item name="description" label="Description">
-            <Input.TextArea rows={3} />
+          <Form.Item name="description" label="商品描述">
+            <Input.TextArea rows={3} placeholder="请输入商品描述" />
           </Form.Item>
         </Form>
       </Modal>

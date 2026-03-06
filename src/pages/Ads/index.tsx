@@ -8,8 +8,8 @@ import {
   Input,
   Select,
   DatePicker,
-  message,
   Tag,
+  App,
 } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { adApi } from '../../api';
@@ -23,6 +23,7 @@ export default function AdsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form] = Form.useForm();
+  const { message } = App.useApp();
 
   const fetchData = async (p = page) => {
     setLoading(true);
@@ -37,7 +38,9 @@ export default function AdsPage() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const handleAdd = () => {
     setEditingId(null);
@@ -57,7 +60,7 @@ export default function AdsPage() {
 
   const handleStatusChange = async (id: number, status: number) => {
     await adApi.updateStatus(id, status);
-    message.success('Status updated');
+    message.success('状态已更新');
     fetchData();
   };
 
@@ -71,48 +74,82 @@ export default function AdsPage() {
 
     if (editingId) {
       await adApi.update(editingId, payload);
-      message.success('Updated');
+      message.success('更新成功');
     } else {
       await adApi.create(payload);
-      message.success('Created');
+      message.success('创建成功');
     }
     setModalOpen(false);
     fetchData();
   };
 
   const statusMap: Record<number, { text: string; color: string }> = {
-    0: { text: 'Pending', color: 'orange' },
-    1: { text: 'Active', color: 'green' },
-    2: { text: 'Offline', color: 'default' },
+    0: { text: '待审核', color: 'warning' },
+    1: { text: '投放中', color: 'success' },
+    2: { text: '已下线', color: 'default' },
   };
 
   const columns = [
-    { title: 'ID', dataIndex: 'id', width: 60 },
-    { title: 'Title', dataIndex: 'title' },
-    { title: 'Position', dataIndex: 'position' },
+    { title: 'ID', dataIndex: 'id', width: 70 },
+    { title: '广告标题', dataIndex: 'title', ellipsis: true },
     {
-      title: 'Status',
+      title: '位置',
+      dataIndex: 'position',
+      width: 100,
+      render: (v: string) => (
+        <span className="inline-block bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded-md capitalize">
+          {v}
+        </span>
+      ),
+    },
+    {
+      title: '状态',
       dataIndex: 'status',
+      width: 100,
       render: (v: number) => {
-        const s = statusMap[v] || { text: 'Unknown', color: 'default' };
-        return <Tag color={s.color}>{s.text}</Tag>;
+        const s = statusMap[v] || { text: '未知', color: 'default' };
+        return (
+          <Tag color={s.color} className="rounded-md">
+            {s.text}
+          </Tag>
+        );
       },
     },
-    { title: 'Start', dataIndex: 'startTime' },
-    { title: 'End', dataIndex: 'endTime' },
     {
-      title: 'Actions',
+      title: '投放时段',
+      width: 200,
       render: (_: any, record: any) => (
-        <Space>
-          <Button size="small" onClick={() => handleEdit(record)}>Edit</Button>
+        <span className="text-xs text-slate-500">
+          {record.startTime
+            ? `${dayjs(record.startTime).format('MM/DD')} - ${dayjs(record.endTime).format('MM/DD')}`
+            : '-'}
+        </span>
+      ),
+    },
+    {
+      title: '操作',
+      width: 200,
+      render: (_: any, record: any) => (
+        <Space size="small">
+          <Button size="small" onClick={() => handleEdit(record)}>
+            编辑
+          </Button>
           {record.status === 0 && (
-            <Button size="small" type="primary" onClick={() => handleStatusChange(record.id, 1)}>
-              Approve
+            <Button
+              size="small"
+              type="primary"
+              onClick={() => handleStatusChange(record.id, 1)}
+            >
+              通过
             </Button>
           )}
           {record.status === 1 && (
-            <Button size="small" onClick={() => handleStatusChange(record.id, 2)}>
-              Offline
+            <Button
+              size="small"
+              danger
+              onClick={() => handleStatusChange(record.id, 2)}
+            >
+              下线
             </Button>
           )}
         </Space>
@@ -122,57 +159,78 @@ export default function AdsPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          Add Advertisement
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          广告管理
+        </h1>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={handleAdd}
+          className="font-medium"
+        >
+          新增广告
         </Button>
       </div>
 
-      <Table
-        columns={columns}
-        dataSource={data}
-        rowKey="id"
-        loading={loading}
-        pagination={{
-          current: page,
-          total,
-          pageSize: 10,
-          onChange: (p) => { setPage(p); fetchData(p); },
-        }}
-      />
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <Table
+          columns={columns}
+          dataSource={data}
+          rowKey="id"
+          loading={loading}
+          pagination={{
+            current: page,
+            total,
+            pageSize: 10,
+            showTotal: (t) => `共 ${t} 条`,
+            onChange: (p) => {
+              setPage(p);
+              fetchData(p);
+            },
+          }}
+        />
+      </div>
 
       <Modal
-        title={editingId ? 'Edit Ad' : 'Create Ad'}
+        title={editingId ? '编辑广告' : '新增广告'}
         open={modalOpen}
         onOk={handleSubmit}
         onCancel={() => setModalOpen(false)}
-        destroyOnClose
+        destroyOnHidden
       >
-        <Form form={form} layout="vertical">
-          <Form.Item name="title" label="Title" rules={[{ required: true }]}>
-            <Input />
+        <Form form={form} layout="vertical" className="mt-4">
+          <Form.Item
+            name="title"
+            label="广告标题"
+            rules={[{ required: true, message: '请输入广告标题' }]}
+          >
+            <Input placeholder="请输入广告标题" />
           </Form.Item>
-          <Form.Item name="position" label="Position">
+          <Form.Item name="position" label="投放位置">
             <Select
+              placeholder="请选择投放位置"
               options={[
-                { value: 'banner', label: 'Banner' },
-                { value: 'sidebar', label: 'Sidebar' },
-                { value: 'popup', label: 'Popup' },
+                { value: 'banner', label: '横幅 (Banner)' },
+                { value: 'sidebar', label: '侧边栏 (Sidebar)' },
+                { value: 'popup', label: '弹窗 (Popup)' },
               ]}
             />
           </Form.Item>
-          <Form.Item name="imageUrl" label="Image URL">
-            <Input />
+          <Form.Item name="imageUrl" label="广告图片">
+            <Input placeholder="https://..." />
           </Form.Item>
-          <Form.Item name="linkUrl" label="Link URL">
-            <Input />
+          <Form.Item name="linkUrl" label="跳转链接">
+            <Input placeholder="https://..." />
           </Form.Item>
-          <Form.Item name="startTime" label="Start Time">
-            <DatePicker showTime style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="endTime" label="End Time">
-            <DatePicker showTime style={{ width: '100%' }} />
-          </Form.Item>
+          <div className="grid grid-cols-2 gap-4">
+            <Form.Item name="startTime" label="开始时间">
+              <DatePicker showTime className="w-full" />
+            </Form.Item>
+            <Form.Item name="endTime" label="结束时间">
+              <DatePicker showTime className="w-full" />
+            </Form.Item>
+          </div>
         </Form>
       </Modal>
     </div>
