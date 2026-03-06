@@ -20,6 +20,7 @@ interface CartItem {
   imageUrl?: string;
   price: number;
   quantity: number;
+  checked: number;
 }
 
 interface CouponOption {
@@ -48,7 +49,8 @@ export default function CheckoutPage() {
           couponApi.mine(),
         ]);
         if (cartRes.status === 'fulfilled' && cartRes.value.success) {
-          setCartItems(cartRes.value.data ?? []);
+          const all: CartItem[] = cartRes.value.data ?? [];
+          setCartItems(all.filter((item) => item.checked === 1));
         }
         if (couponRes.status === 'fulfilled' && couponRes.value.success) {
           setCoupons(couponRes.value.data ?? []);
@@ -97,17 +99,17 @@ export default function CheckoutPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight text-slate-900 mb-6">
+      <h1 className="text-2xl font-bold tracking-tight text-black mb-6">
         确认订单
       </h1>
 
       <Spin spinning={loading}>
         {cartItems.length === 0 && !loading ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-16">
+          <div className="bg-white border border-black p-16">
             <Empty
-              image={<ShoppingCartOutlined className="text-6xl text-slate-300" />}
+              image={<ShoppingCartOutlined className="text-6xl text-gray-400" />}
               description={
-                <span className="text-slate-400">购物车为空，无法结算</span>
+                <span className="text-gray-500">购物车为空，无法结算</span>
               }
             >
               <Button type="primary" onClick={() => navigate('/cart')}>
@@ -120,17 +122,17 @@ export default function CheckoutPage() {
             {/* Left — Order Info */}
             <div className="lg:col-span-2 space-y-6">
               {/* Cart Items Summary */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h2 className="text-base font-semibold text-slate-900 mb-4">
+              <div className="bg-white border border-black p-6">
+                <h2 className="text-base font-bold text-black mb-4">
                   商品清单
                 </h2>
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-gray-300">
                   {cartItems.map((item) => (
                     <div
                       key={item.id}
                       className="flex items-center gap-4 py-3"
                     >
-                      <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 overflow-hidden">
+                      <div className="w-12 h-12 bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
                         {item.imageUrl ? (
                           <img
                             src={item.imageUrl}
@@ -138,18 +140,18 @@ export default function CheckoutPage() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <ShoppingCartOutlined className="text-lg text-slate-300" />
+                          <ShoppingCartOutlined className="text-lg text-gray-400" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className="text-sm text-slate-900 truncate block">
+                        <span className="text-sm text-black truncate block">
                           {item.productName}
                         </span>
                       </div>
-                      <span className="text-xs text-slate-400 shrink-0">
+                      <span className="text-xs text-gray-500 shrink-0">
                         x{item.quantity}
                       </span>
-                      <span className="text-sm font-medium text-slate-900 w-20 text-right shrink-0">
+                      <span className="text-sm font-bold text-black w-20 text-right shrink-0">
                         ¥{(item.price * item.quantity).toFixed(2)}
                       </span>
                     </div>
@@ -158,8 +160,8 @@ export default function CheckoutPage() {
               </div>
 
               {/* Delivery Info Form */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h2 className="text-base font-semibold text-slate-900 mb-4">
+              <div className="bg-white border border-black p-6">
+                <h2 className="text-base font-bold text-black mb-4">
                   收货信息
                 </h2>
                 <Form form={form} layout="vertical">
@@ -215,20 +217,19 @@ export default function CheckoutPage() {
 
             {/* Right — Price Summary */}
             <div>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-6">
-                <h2 className="text-base font-semibold text-slate-900 mb-4">
+              <div className="bg-white border border-black p-6 sticky top-6">
+                <h2 className="text-base font-bold text-black mb-4">
                   订单汇总
                 </h2>
 
                 <div className="space-y-3 text-sm">
-                  <div className="flex justify-between text-slate-500">
+                  <div className="flex justify-between text-gray-600">
                     <span>商品小计</span>
                     <span>¥{subtotal.toFixed(2)}</span>
                   </div>
 
-                  {/* Coupon selector */}
                   <div>
-                    <label className="text-xs text-slate-400 block mb-1">
+                    <label className="text-xs text-gray-500 block mb-1">
                       优惠券
                     </label>
                     <Select
@@ -255,8 +256,8 @@ export default function CheckoutPage() {
                   <Divider className="my-3" />
 
                   <div className="flex justify-between items-baseline">
-                    <span className="text-slate-900 font-medium">应付金额</span>
-                    <span className="text-xl font-bold text-blue-600">
+                    <span className="text-black font-bold">应付金额</span>
+                    <span className="text-xl font-bold text-red-600">
                       ¥{totalAmount.toFixed(2)}
                     </span>
                   </div>
@@ -266,7 +267,7 @@ export default function CheckoutPage() {
                   type="primary"
                   size="large"
                   block
-                  className="mt-6 font-medium"
+                  className="mt-6 font-bold"
                   loading={submitting}
                   onClick={handleSubmit}
                 >

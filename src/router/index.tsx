@@ -13,6 +13,7 @@ import CheckoutPage from '../pages/Checkout';
 import OrdersPage from '../pages/Orders';
 import OrderDetailPage from '../pages/OrderDetail';
 import CouponsPage from '../pages/Coupons';
+import CategoriesPage from '../pages/Categories';
 
 const router = createBrowserRouter([
   {
@@ -31,6 +32,7 @@ const router = createBrowserRouter([
       { path: 'dashboard', element: <DashboardPage /> },
       { path: 'products', element: <ProductsPage /> },
       { path: 'products/:id', element: <ProductDetailPage /> },
+      { path: 'categories', element: <CategoriesPage /> },
       { path: 'brands', element: <BrandsPage /> },
       { path: 'ads', element: <AdsPage /> },
       { path: 'cart', element: <CartPage /> },

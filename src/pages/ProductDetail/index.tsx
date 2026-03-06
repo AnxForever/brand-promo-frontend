@@ -93,7 +93,6 @@ export default function ProductDetailPage() {
           const list = reviewRes.value.data?.list ?? reviewRes.value.data ?? [];
           setReviews(list);
         }
-        // Record browse history
         browseHistoryApi.record(Number(id)).catch(() => {});
       } finally {
         setLoading(false);
@@ -126,7 +125,6 @@ export default function ProductDetailPage() {
       message.success('评价提交成功');
       setReviewModalOpen(false);
       reviewForm.resetFields();
-      // Refresh reviews
       const res = await reviewApi.listByProduct(Number(id));
       if (res.success) {
         setReviews(res.data?.list ?? res.data ?? []);
@@ -136,7 +134,6 @@ export default function ProductDetailPage() {
     }
   };
 
-  // Rating distribution
   const ratingDist = [5, 4, 3, 2, 1].map((star) => {
     const count = reviews.filter((r) => r.rating === star).length;
     return { star, count, pct: reviews.length ? (count / reviews.length) * 100 : 0 };
@@ -146,7 +143,6 @@ export default function ProductDetailPage() {
       ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
       : 0;
 
-  // Parse images/specs from JSON strings
   const images = product ? parseImages(product) : [];
   const specs = product ? parseSpecs(product) : {};
 
@@ -158,7 +154,7 @@ export default function ProductDetailPage() {
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/products')}
         />
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-bold tracking-tight text-black">
           商品详情
         </h1>
       </div>
@@ -167,11 +163,11 @@ export default function ProductDetailPage() {
         {product && (
           <div className="space-y-6">
             {/* Top Section: Image + Info */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white border border-black p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Image Gallery */}
                 <div>
-                  <div className="aspect-square rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden mb-3">
+                  <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden mb-3">
                     {images.length > 0 ? (
                       <img
                         src={images[currentImage]}
@@ -179,7 +175,7 @@ export default function ProductDetailPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <ShoppingCartOutlined className="text-6xl text-slate-300" />
+                      <ShoppingCartOutlined className="text-6xl text-gray-400" />
                     )}
                   </div>
                   {images.length > 1 && (
@@ -187,10 +183,10 @@ export default function ProductDetailPage() {
                       {images.map((img, idx) => (
                         <button
                           key={idx}
-                          className={`w-16 h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-colors ${
+                          className={`w-16 h-16 overflow-hidden border-2 shrink-0 transition-opacity duration-150 ${
                             idx === currentImage
-                              ? 'border-blue-600'
-                              : 'border-transparent hover:border-gray-300'
+                              ? 'border-red-600'
+                              : 'border-transparent hover:border-gray-400'
                           }`}
                           onClick={() => setCurrentImage(idx)}
                         >
@@ -207,45 +203,40 @@ export default function ProductDetailPage() {
 
                 {/* Product Info */}
                 <div className="flex flex-col">
-                  <h2 className="text-xl font-semibold text-slate-900">
+                  <h2 className="text-xl font-bold text-black">
                     {product.name}
                   </h2>
 
                   <div className="flex items-center gap-2 mt-2">
                     {product.category && (
-                      <Tag className="rounded-md">{product.category}</Tag>
+                      <Tag>{product.category}</Tag>
                     )}
                     {product.brandName && (
-                      <Tag color="blue" className="rounded-md">
-                        {product.brandName}
-                      </Tag>
+                      <Tag color="red">{product.brandName}</Tag>
                     )}
-                    <Tag
-                      color={product.status === 1 ? 'success' : 'error'}
-                      className="rounded-md"
-                    >
+                    <Tag color={product.status === 1 ? 'success' : 'error'}>
                       {product.status === 1 ? '在售' : '已下架'}
                     </Tag>
                   </div>
 
                   <div className="mt-4">
-                    <span className="text-3xl font-bold text-blue-600">
+                    <span className="text-3xl font-bold text-red-600">
                       ¥{product.price?.toFixed(2)}
                     </span>
                     {product.originalPrice && product.originalPrice > product.price && (
-                      <span className="text-sm text-slate-400 line-through ml-2">
+                      <span className="text-sm text-gray-500 line-through ml-2">
                         ¥{product.originalPrice.toFixed(2)}
                       </span>
                     )}
                     {product.stock !== undefined && (
-                      <span className="text-xs text-slate-400 ml-4">
+                      <span className="text-xs text-gray-500 ml-4">
                         库存 {product.stock}
                       </span>
                     )}
                   </div>
 
                   {product.description && (
-                    <p className="text-sm text-slate-500 mt-4 leading-relaxed">
+                    <p className="text-sm text-gray-600 mt-4 leading-relaxed">
                       {product.description}
                     </p>
                   )}
@@ -253,16 +244,16 @@ export default function ProductDetailPage() {
                   {/* Specs */}
                   {Object.keys(specs).length > 0 && (
                     <div className="mt-4">
-                      <h3 className="text-sm font-medium text-slate-700 mb-2">
+                      <h3 className="text-sm font-bold text-gray-700 mb-2">
                         商品参数
                       </h3>
                       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                         {Object.entries(specs).map(([k, v]) => (
                           <div key={k} className="flex">
-                            <span className="text-slate-400 w-20 shrink-0">
+                            <span className="text-gray-500 w-20 shrink-0">
                               {k}
                             </span>
-                            <span className="text-slate-700">{v}</span>
+                            <span className="text-gray-700">{v}</span>
                           </div>
                         ))}
                       </div>
@@ -272,7 +263,7 @@ export default function ProductDetailPage() {
                   <div className="mt-auto pt-6">
                     <Divider className="my-4" />
                     <div className="flex items-center gap-4">
-                      <span className="text-sm text-slate-500">数量</span>
+                      <span className="text-sm text-gray-600">数量</span>
                       <InputNumber
                         min={1}
                         max={99}
@@ -284,7 +275,7 @@ export default function ProductDetailPage() {
                       type="primary"
                       size="large"
                       icon={<ShoppingCartOutlined />}
-                      className="mt-4 font-medium w-full md:w-auto px-12"
+                      className="mt-4 font-bold w-full md:w-auto px-12"
                       loading={addingCart}
                       onClick={handleAddToCart}
                       disabled={product.status !== 1}
@@ -297,9 +288,9 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Reviews Section */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white border border-black p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-semibold text-slate-900">
+                <h2 className="text-base font-bold text-black">
                   用户评价（{reviews.length}）
                 </h2>
                 <Button onClick={() => setReviewModalOpen(true)}>
@@ -309,29 +300,29 @@ export default function ProductDetailPage() {
 
               {/* Rating Summary */}
               {reviews.length > 0 && (
-                <div className="flex gap-8 mb-6 p-4 bg-slate-50 rounded-lg">
+                <div className="flex gap-8 mb-6 p-4 bg-gray-50 border border-gray-300">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-slate-900">
+                    <div className="text-3xl font-bold text-black">
                       {avgRating.toFixed(1)}
                     </div>
                     <Rate disabled allowHalf value={avgRating} className="text-sm" />
-                    <div className="text-xs text-slate-400 mt-1">
+                    <div className="text-xs text-gray-500 mt-1">
                       {reviews.length} 条评价
                     </div>
                   </div>
                   <div className="flex-1 space-y-1">
                     {ratingDist.map((d) => (
                       <div key={d.star} className="flex items-center gap-2 text-sm">
-                        <span className="w-8 text-slate-500 text-right">
+                        <span className="w-8 text-gray-600 text-right">
                           {d.star}星
                         </span>
                         <Progress
                           percent={d.pct}
                           showInfo={false}
-                          strokeColor="#2563eb"
+                          strokeColor="#e53935"
                           className="flex-1 m-0"
                         />
-                        <span className="w-8 text-xs text-slate-400">
+                        <span className="w-8 text-xs text-gray-500">
                           {d.count}
                         </span>
                       </div>
@@ -348,10 +339,10 @@ export default function ProductDetailPage() {
                   <List.Item className="px-0">
                     <div className="w-full">
                       <div className="flex items-center gap-2 mb-1">
-                        <div className="w-7 h-7 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                        <div className="w-7 h-7 bg-red-50 text-red-600 flex items-center justify-center">
                           <UserOutlined className="text-xs" />
                         </div>
-                        <span className="text-sm font-medium text-slate-700">
+                        <span className="text-sm font-bold text-gray-700">
                           {item.username}
                         </span>
                         <Rate
@@ -359,13 +350,13 @@ export default function ProductDetailPage() {
                           value={item.rating}
                           className="text-xs"
                         />
-                        <span className="text-xs text-slate-400 ml-auto">
+                        <span className="text-xs text-gray-500 ml-auto">
                           {item.createdAt
                             ? new Date(item.createdAt).toLocaleDateString()
                             : ''}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-600 ml-9">
+                      <p className="text-sm text-gray-600 ml-9">
                         {item.content}
                       </p>
                     </div>

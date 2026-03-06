@@ -157,11 +157,11 @@ export default function OrderDetailPage() {
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/orders')}
         />
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-bold tracking-tight text-black">
           订单详情
         </h1>
         {order && (
-          <span className="text-sm text-slate-400 font-mono">
+          <span className="text-sm text-gray-500 font-mono">
             {order.orderNo ?? `#${order.id}`}
           </span>
         )}
@@ -172,7 +172,7 @@ export default function OrderDetailPage() {
           <div className="space-y-6">
             {/* Status Steps */}
             {order.status !== 'CANCELLED' ? (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="bg-white border border-black p-6">
                 <Steps
                   current={cfg?.step ?? 0}
                   items={[
@@ -184,7 +184,7 @@ export default function OrderDetailPage() {
                 />
               </div>
             ) : (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+              <div className="bg-white border border-black p-6 text-center">
                 <Tag color="default" className="text-base px-4 py-1">
                   订单已取消
                 </Tag>
@@ -195,25 +195,25 @@ export default function OrderDetailPage() {
               {/* Left — Order Info */}
               <div className="lg:col-span-2 space-y-6">
                 {/* Items */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h2 className="text-base font-semibold text-slate-900 mb-4">
+                <div className="bg-white border border-black p-6">
+                  <h2 className="text-base font-bold text-black mb-4">
                     商品明细
                   </h2>
-                  <div className="divide-y divide-gray-100">
+                  <div className="divide-y divide-gray-300">
                     {order.items?.map((item, idx) => (
                       <div
                         key={idx}
                         className="flex items-center justify-between py-3"
                       >
                         <div className="flex-1 min-w-0">
-                          <span className="text-sm text-slate-900">
+                          <span className="text-sm text-black">
                             {item.productName}
                           </span>
-                          <span className="text-xs text-slate-400 ml-2">
+                          <span className="text-xs text-gray-500 ml-2">
                             x{item.quantity}
                           </span>
                         </div>
-                        <span className="text-sm font-medium text-slate-900 shrink-0">
+                        <span className="text-sm font-bold text-black shrink-0">
                           ¥{(item.subtotal ?? item.price * item.quantity).toFixed(2)}
                         </span>
                       </div>
@@ -221,8 +221,8 @@ export default function OrderDetailPage() {
                   </div>
                   <Divider className="my-3" />
                   <div className="flex justify-between">
-                    <span className="text-slate-500">商品总额</span>
-                    <span className="font-semibold text-slate-900">
+                    <span className="text-gray-600">商品总额</span>
+                    <span className="font-bold text-black">
                       ¥{order.totalAmount?.toFixed(2)}
                     </span>
                   </div>
@@ -237,8 +237,8 @@ export default function OrderDetailPage() {
                 </div>
 
                 {/* Delivery Info */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h2 className="text-base font-semibold text-slate-900 mb-4">
+                <div className="bg-white border border-black p-6">
+                  <h2 className="text-base font-bold text-black mb-4">
                     收货信息
                   </h2>
                   <Descriptions column={1} size="small">
@@ -265,15 +265,15 @@ export default function OrderDetailPage() {
 
               {/* Right — Summary & Actions */}
               <div>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-6">
-                  <h2 className="text-base font-semibold text-slate-900 mb-4">
+                <div className="bg-white border border-black p-6 sticky top-6">
+                  <h2 className="text-base font-bold text-black mb-4">
                     订单状态
                   </h2>
 
                   <div className="text-center mb-4">
                     <Tag
                       color={cfg?.color}
-                      className="text-sm px-3 py-0.5 rounded-md"
+                      className="text-sm px-3 py-0.5"
                     >
                       {cfg?.text}
                     </Tag>
@@ -305,13 +305,12 @@ export default function OrderDetailPage() {
                   <Divider className="my-4" />
 
                   <div className="flex justify-between items-baseline mb-4">
-                    <span className="text-slate-500">应付金额</span>
-                    <span className="text-xl font-bold text-blue-600">
+                    <span className="text-gray-600">应付金额</span>
+                    <span className="text-xl font-bold text-red-600">
                       ¥{order.payAmount?.toFixed(2)}
                     </span>
                   </div>
 
-                  {/* Action Buttons */}
                   <div className="space-y-2">
                     {order.status === 'PENDING' && (
                       <>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Button,
+  Checkbox,
   InputNumber,
   Popconfirm,
   Spin,
@@ -22,6 +23,7 @@ interface CartItem {
   imageUrl?: string;
   price: number;
   quantity: number;
+  checked: number;
 }
 
 export default function CartPage() {
@@ -38,7 +40,6 @@ export default function CartPage() {
         setItems(res.data ?? []);
       }
     } catch {
-      // Backend not ready yet — show empty cart
       setItems([]);
     } finally {
       setLoading(false);
@@ -48,6 +49,32 @@ export default function CartPage() {
   useEffect(() => {
     fetchCart();
   }, []);
+
+  const handleCheckedChange = async (id: number, checked: boolean) => {
+    const val = checked ? 1 : 0;
+    try {
+      await cartApi.updateChecked(id, val);
+      setItems((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, checked: val } : item)),
+      );
+    } catch {
+      message.error('操作失败');
+    }
+  };
+
+  const handleSelectAll = async (checked: boolean) => {
+    const val = checked ? 1 : 0;
+    try {
+      await Promise.all(
+        items.filter((item) => item.checked !== val).map((item) =>
+          cartApi.updateChecked(item.id, val),
+        ),
+      );
+      setItems((prev) => prev.map((item) => ({ ...item, checked: val })));
+    } catch {
+      message.error('操作失败');
+    }
+  };
 
   const handleQuantityChange = async (id: number, quantity: number) => {
     if (quantity < 1) return;
@@ -81,16 +108,19 @@ export default function CartPage() {
     }
   };
 
-  const totalAmount = items.reduce(
+  const checkedItems = items.filter((item) => item.checked === 1);
+  const totalAmount = checkedItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0,
   );
-  const totalCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalCount = checkedItems.reduce((sum, item) => sum + item.quantity, 0);
+  const allChecked = items.length > 0 && checkedItems.length === items.length;
+  const indeterminate = checkedItems.length > 0 && checkedItems.length < items.length;
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-bold tracking-tight text-black">
           购物车
         </h1>
         {items.length > 0 && (
@@ -108,11 +138,11 @@ export default function CartPage() {
 
       <Spin spinning={loading}>
         {items.length === 0 && !loading ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-16">
+          <div className="bg-white border border-black p-16">
             <Empty
-              image={<ShoppingCartOutlined className="text-6xl text-slate-300" />}
+              image={<ShoppingCartOutlined className="text-6xl text-gray-400" />}
               description={
-                <span className="text-slate-400">购物车是空的，快去挑选商品吧</span>
+                <span className="text-gray-500">购物车是空的，快去挑选商品吧</span>
               }
             >
               <Button type="primary" onClick={() => navigate('/products')}>
@@ -123,14 +153,29 @@ export default function CartPage() {
         ) : (
           <div className="space-y-4">
             {/* Cart Items */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 divide-y divide-gray-100">
+            <div className="bg-white border border-black divide-y divide-gray-300">
+              {/* Header */}
+              <div className="flex items-center gap-4 px-4 py-3 bg-gray-50">
+                <Checkbox
+                  checked={allChecked}
+                  indeterminate={indeterminate}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                >
+                  <span className="text-sm text-gray-600">全选</span>
+                </Checkbox>
+              </div>
+
               {items.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors"
+                  className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-opacity duration-150"
                 >
-                  {/* Product Image */}
-                  <div className="w-20 h-20 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 overflow-hidden">
+                  <Checkbox
+                    checked={item.checked === 1}
+                    onChange={(e) => handleCheckedChange(item.id, e.target.checked)}
+                  />
+
+                  <div className="w-20 h-20 bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
                     {item.imageUrl ? (
                       <img
                         src={item.imageUrl}
@@ -138,21 +183,19 @@ export default function CartPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <ShoppingCartOutlined className="text-2xl text-slate-300" />
+                      <ShoppingCartOutlined className="text-2xl text-gray-400" />
                     )}
                   </div>
 
-                  {/* Product Info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-medium text-slate-900 truncate">
+                    <h3 className="text-sm font-bold text-black truncate">
                       {item.productName}
                     </h3>
-                    <p className="text-sm text-blue-600 font-semibold mt-1">
+                    <p className="text-sm text-red-600 font-bold mt-1">
                       ¥{item.price.toFixed(2)}
                     </p>
                   </div>
 
-                  {/* Quantity */}
                   <div className="flex items-center gap-2 shrink-0">
                     <InputNumber
                       min={1}
@@ -166,14 +209,12 @@ export default function CartPage() {
                     />
                   </div>
 
-                  {/* Subtotal */}
                   <div className="w-24 text-right shrink-0">
-                    <span className="text-sm font-semibold text-slate-900">
+                    <span className="text-sm font-bold text-black">
                       ¥{(item.price * item.quantity).toFixed(2)}
                     </span>
                   </div>
 
-                  {/* Remove */}
                   <Popconfirm
                     title="确认移除该商品？"
                     onConfirm={() => handleRemove(item.id)}
@@ -182,7 +223,7 @@ export default function CartPage() {
                       type="text"
                       size="small"
                       icon={<DeleteOutlined />}
-                      className="text-slate-400 hover:text-red-500"
+                      className="text-gray-500 hover:text-red-600"
                     />
                   </Popconfirm>
                 </div>
@@ -190,25 +231,27 @@ export default function CartPage() {
             </div>
 
             {/* Summary Bar */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white border border-black p-6">
               <div className="flex items-center justify-between">
-                <div className="text-slate-500">
-                  共 <span className="font-semibold text-slate-900">{totalCount}</span> 件商品
+                <div className="text-gray-600">
+                  已选 <span className="font-bold text-black">{checkedItems.length}</span> 件商品，
+                  共 <span className="font-bold text-black">{totalCount}</span> 个
                 </div>
                 <div className="flex items-center gap-6">
-                  <div className="text-slate-500">
+                  <div className="text-gray-600">
                     合计：
-                    <span className="text-xl font-bold text-blue-600 ml-1">
+                    <span className="text-xl font-bold text-red-600 ml-1">
                       ¥{totalAmount.toFixed(2)}
                     </span>
                   </div>
                   <Button
                     type="primary"
                     size="large"
-                    className="font-medium px-8"
+                    className="font-bold px-8"
+                    disabled={checkedItems.length === 0}
                     onClick={() => navigate('/checkout')}
                   >
-                    去结算
+                    去结算（{checkedItems.length}）
                   </Button>
                 </div>
               </div>

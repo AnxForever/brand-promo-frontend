@@ -74,10 +74,10 @@ export default function BrandsPage() {
       dataIndex: 'name',
       render: (name: string) => (
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-bold shrink-0">
+          <div className="w-8 h-8 bg-red-50 text-red-600 flex items-center justify-center text-xs font-bold shrink-0 border border-black">
             {name?.charAt(0)}
           </div>
-          <span className="font-medium text-slate-900">{name}</span>
+          <span className="font-bold text-black">{name}</span>
         </div>
       ),
     },
@@ -86,7 +86,7 @@ export default function BrandsPage() {
       dataIndex: 'description',
       ellipsis: true,
       render: (v: string) => (
-        <span className="text-slate-500">{v || '-'}</span>
+        <span className="text-gray-600">{v || '-'}</span>
       ),
     },
     {
@@ -94,7 +94,7 @@ export default function BrandsPage() {
       dataIndex: 'createdAt',
       width: 120,
       render: (v: string) => (
-        <span className="text-xs text-slate-400">
+        <span className="text-xs text-gray-500">
           {v ? new Date(v).toLocaleDateString() : '-'}
         </span>
       ),
@@ -124,20 +124,20 @@ export default function BrandsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-bold tracking-tight text-black">
           品牌管理
         </h1>
         <Button
           type="primary"
           icon={<PlusOutlined />}
           onClick={handleAdd}
-          className="font-medium"
+          className="font-bold"
         >
           新增品牌
         </Button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white border border-black p-6">
         <Table
           columns={columns}
           dataSource={data}
@@ -150,7 +150,7 @@ export default function BrandsPage() {
       <Modal
         title={
           <div className="flex items-center gap-2">
-            <TagOutlined className="text-blue-600" />
+            <TagOutlined className="text-red-600" />
             <span>{editingId ? '编辑品牌' : '新增品牌'}</span>
           </div>
         }

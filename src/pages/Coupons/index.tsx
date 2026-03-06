@@ -141,7 +141,6 @@ export default function CouponsPage() {
     }
   };
 
-  // Admin table columns
   const adminColumns = [
     { title: 'ID', dataIndex: 'id', width: 70 },
     {
@@ -150,7 +149,7 @@ export default function CouponsPage() {
       render: (v: string) => (
         <div className="flex items-center gap-2">
           <GiftOutlined className="text-orange-500" />
-          <span className="font-medium text-slate-900">{v}</span>
+          <span className="font-bold text-black">{v}</span>
         </div>
       ),
     },
@@ -159,7 +158,7 @@ export default function CouponsPage() {
       dataIndex: 'discount',
       width: 100,
       render: (v: number) => (
-        <span className="font-semibold text-orange-600">¥{v?.toFixed(2)}</span>
+        <span className="font-bold text-orange-600">¥{v?.toFixed(2)}</span>
       ),
     },
     {
@@ -167,7 +166,7 @@ export default function CouponsPage() {
       dataIndex: 'minAmount',
       width: 110,
       render: (v: number) => (
-        <span className="text-slate-500">满¥{v?.toFixed(2)}</span>
+        <span className="text-gray-600">满¥{v?.toFixed(2)}</span>
       ),
     },
     {
@@ -179,14 +178,14 @@ export default function CouponsPage() {
             {record.remaining ?? '-'}/{record.total}
           </span>
         ) : (
-          <span className="text-slate-400">-</span>
+          <span className="text-gray-500">-</span>
         ),
     },
     {
       title: '有效期',
       width: 180,
       render: (_: any, record: Coupon) => (
-        <span className="text-xs text-slate-400">
+        <span className="text-xs text-gray-500">
           {record.startTime
             ? `${dayjs(record.startTime).format('MM/DD')} - ${dayjs(record.endTime).format('MM/DD')}`
             : '-'}
@@ -214,7 +213,6 @@ export default function CouponsPage() {
     },
   ];
 
-  // User coupon cards
   const couponCards = (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {coupons.map((coupon) => {
@@ -228,12 +226,11 @@ export default function CouponsPage() {
         return (
           <Card
             key={coupon.id}
-            className="rounded-xl border-gray-200 overflow-hidden"
+            className="border-black overflow-hidden"
             styles={{ body: { padding: 0 } }}
           >
             <div className="flex">
-              {/* Left: Discount */}
-              <div className="w-28 bg-gradient-to-br from-orange-500 to-orange-600 text-white flex flex-col items-center justify-center p-4 shrink-0">
+              <div className="w-28 bg-orange-600 text-white flex flex-col items-center justify-center p-4 shrink-0">
                 <span className="text-2xl font-bold">
                   ¥{coupon.discount}
                 </span>
@@ -241,34 +238,27 @@ export default function CouponsPage() {
                   满{coupon.minAmount}可用
                 </span>
               </div>
-              {/* Right: Info */}
               <div className="flex-1 p-4 flex flex-col">
-                <h3 className="text-sm font-medium text-slate-900">
+                <h3 className="text-sm font-bold text-black">
                   {coupon.name}
                 </h3>
-                <span className="text-xs text-slate-400 mt-1">
+                <span className="text-xs text-gray-500 mt-1">
                   {coupon.endTime
                     ? `有效期至 ${dayjs(coupon.endTime).format('YYYY/MM/DD')}`
                     : '长期有效'}
                 </span>
                 {coupon.remaining != null && (
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-gray-500">
                     剩余 {coupon.remaining} 张
                   </span>
                 )}
                 <div className="mt-auto pt-2">
                   {claimed ? (
-                    <Tag color="default" className="rounded-md">
-                      已领取
-                    </Tag>
+                    <Tag color="default">已领取</Tag>
                   ) : expired ? (
-                    <Tag color="default" className="rounded-md">
-                      已过期
-                    </Tag>
+                    <Tag color="default">已过期</Tag>
                   ) : soldOut ? (
-                    <Tag color="default" className="rounded-md">
-                      已领完
-                    </Tag>
+                    <Tag color="default">已领完</Tag>
                   ) : (
                     <Button
                       type="primary"
@@ -286,28 +276,25 @@ export default function CouponsPage() {
       })}
 
       {coupons.length === 0 && (
-        <div className="col-span-full text-center py-12 text-slate-400">
+        <div className="col-span-full text-center py-12 text-gray-500">
           暂无可领取的优惠券
         </div>
       )}
     </div>
   );
 
-  // My coupons list
   const myCouponList = (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {myCoupons.map((mc) => (
         <Card
           key={mc.id}
-          className={`rounded-xl border-gray-200 overflow-hidden ${mc.used ? 'opacity-50' : ''}`}
+          className={`border-black overflow-hidden ${mc.used ? 'opacity-50' : ''}`}
           styles={{ body: { padding: 0 } }}
         >
           <div className="flex">
             <div
               className={`w-28 text-white flex flex-col items-center justify-center p-4 shrink-0 ${
-                mc.used
-                  ? 'bg-gray-400'
-                  : 'bg-gradient-to-br from-blue-500 to-blue-600'
+                mc.used ? 'bg-gray-400' : 'bg-red-600'
               }`}
             >
               <span className="text-2xl font-bold">¥{mc.discount}</span>
@@ -316,21 +303,17 @@ export default function CouponsPage() {
               </span>
             </div>
             <div className="flex-1 p-4">
-              <h3 className="text-sm font-medium text-slate-900">{mc.name}</h3>
-              <span className="text-xs text-slate-400 mt-1 block">
+              <h3 className="text-sm font-bold text-black">{mc.name}</h3>
+              <span className="text-xs text-gray-500 mt-1 block">
                 {mc.endTime
                   ? `有效期至 ${dayjs(mc.endTime).format('YYYY/MM/DD')}`
                   : '长期有效'}
               </span>
               <div className="mt-2">
                 {mc.used ? (
-                  <Tag color="default" className="rounded-md">
-                    已使用
-                  </Tag>
+                  <Tag color="default">已使用</Tag>
                 ) : (
-                  <Tag color="blue" className="rounded-md">
-                    可使用
-                  </Tag>
+                  <Tag color="red">可使用</Tag>
                 )}
               </div>
             </div>
@@ -339,7 +322,7 @@ export default function CouponsPage() {
       ))}
 
       {myCoupons.length === 0 && (
-        <div className="col-span-full text-center py-12 text-slate-400">
+        <div className="col-span-full text-center py-12 text-gray-500">
           暂无优惠券，快去领取吧
         </div>
       )}
@@ -349,7 +332,7 @@ export default function CouponsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-bold tracking-tight text-black">
           优惠券管理
         </h1>
         {isAdmin && (
@@ -357,14 +340,14 @@ export default function CouponsPage() {
             type="primary"
             icon={<PlusOutlined />}
             onClick={handleAdd}
-            className="font-medium"
+            className="font-bold"
           >
             新增优惠券
           </Button>
         )}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white border border-black p-6">
         <Tabs
           defaultActiveKey={isAdmin ? 'manage' : 'available'}
           items={[
@@ -399,7 +382,6 @@ export default function CouponsPage() {
         />
       </div>
 
-      {/* Admin Create/Edit Modal */}
       <Modal
         title={
           <div className="flex items-center gap-2">

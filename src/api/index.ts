@@ -65,6 +65,8 @@ export const cartApi = {
     request.put<any, any>(`/cart/${id}`, { quantity }),
   remove: (id: number) => request.delete<any, any>(`/cart/${id}`),
   clear: () => request.delete<any, any>('/cart'),
+  updateChecked: (id: number, checked: number) =>
+    request.put<any, any>(`/cart/${id}/checked`, { checked }),
 };
 
 // ---- 订单 ----
@@ -122,4 +124,13 @@ export const couponApi = {
 // ---- 推荐 ----
 export const recommendApi = {
   list: () => request.get<any, any>('/recommendations'),
+};
+
+// ---- 分类管理 ----
+export const categoryApi = {
+  tree: () => request.get<any, any>('/categories'),
+  list: () => request.get<any, any>('/categories/list'),
+  create: (data: any) => request.post<any, any>('/categories', data),
+  update: (id: number, data: any) => request.put<any, any>(`/categories/${id}`, data),
+  delete: (id: number) => request.delete<any, any>(`/categories/${id}`),
 };

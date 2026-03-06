@@ -9,39 +9,50 @@ function App() {
       locale={zhCN}
       theme={{
         token: {
-          colorPrimary: '#2563eb',
+          colorPrimary: '#e53935',
           colorBgContainer: '#ffffff',
-          colorBgLayout: '#f8fafc',
-          colorBorder: '#e5e7eb',
-          colorText: '#0f172a',
-          colorTextSecondary: '#64748b',
-          borderRadius: 8,
+          colorBgLayout: '#f5f5f5',
+          colorBorder: '#000000',
+          colorText: '#111111',
+          colorTextSecondary: '#555555',
+          borderRadius: 0,
           fontFamily:
-            "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif",
+            "'Helvetica Neue', Helvetica, Arial, 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif",
         },
         components: {
           Button: {
-            borderRadius: 8,
+            borderRadius: 0,
             controlHeight: 38,
+            primaryShadow: 'none',
           },
           Input: {
-            borderRadius: 8,
+            borderRadius: 0,
             controlHeight: 38,
+            activeShadow: 'none',
           },
           Select: {
-            borderRadius: 8,
+            borderRadius: 0,
             controlHeight: 38,
           },
           Card: {
-            borderRadiusLG: 12,
+            borderRadiusLG: 0,
           },
           Table: {
-            borderRadius: 12,
-            headerBg: '#f8fafc',
-            rowHoverBg: '#f8fafc',
+            borderRadius: 0,
+            headerBg: '#fafafa',
+            rowHoverBg: '#fafafa',
           },
           Modal: {
-            borderRadiusLG: 12,
+            borderRadiusLG: 0,
+          },
+          InputNumber: {
+            borderRadius: 0,
+          },
+          DatePicker: {
+            borderRadius: 0,
+          },
+          Pagination: {
+            borderRadius: 0,
           },
         },
       }}

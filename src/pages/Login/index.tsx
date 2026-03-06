@@ -30,17 +30,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
       <div className="w-full max-w-[400px]">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <div className="bg-white border-2 border-black p-8">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-600 text-white text-lg font-bold mb-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-red-600 text-white text-lg font-bold mb-4">
               BP
             </div>
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+            <h1 className="text-2xl font-bold tracking-tight text-black">
               品牌推广管理系统
             </h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-gray-600 mt-1">
               请登录您的账号
             </p>
           </div>
@@ -51,7 +51,7 @@ export default function LoginPage() {
               rules={[{ required: true, message: '请输入用户名' }]}
             >
               <Input
-                prefix={<UserOutlined className="text-slate-400" />}
+                prefix={<UserOutlined className="text-gray-500" />}
                 placeholder="用户名"
               />
             </Form.Item>
@@ -60,7 +60,7 @@ export default function LoginPage() {
               rules={[{ required: true, message: '请输入密码' }]}
             >
               <Input.Password
-                prefix={<LockOutlined className="text-slate-400" />}
+                prefix={<LockOutlined className="text-gray-500" />}
                 placeholder="密码"
               />
             </Form.Item>
@@ -70,14 +70,14 @@ export default function LoginPage() {
                 htmlType="submit"
                 loading={loading}
                 block
-                className="h-10 font-medium"
+                className="h-10 font-bold"
               >
                 登 录
               </Button>
             </Form.Item>
           </Form>
 
-          <p className="text-xs text-slate-400 text-center mt-4">
+          <p className="text-xs text-gray-500 text-center mt-4">
             默认账号: admin / admin123
           </p>
         </div>

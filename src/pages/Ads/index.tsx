@@ -97,7 +97,7 @@ export default function AdsPage() {
       dataIndex: 'position',
       width: 100,
       render: (v: string) => (
-        <span className="inline-block bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded-md capitalize">
+        <span className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-0.5 border border-black capitalize">
           {v}
         </span>
       ),
@@ -108,18 +108,14 @@ export default function AdsPage() {
       width: 100,
       render: (v: number) => {
         const s = statusMap[v] || { text: '未知', color: 'default' };
-        return (
-          <Tag color={s.color} className="rounded-md">
-            {s.text}
-          </Tag>
-        );
+        return <Tag color={s.color}>{s.text}</Tag>;
       },
     },
     {
       title: '投放时段',
       width: 200,
       render: (_: any, record: any) => (
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-gray-600">
           {record.startTime
             ? `${dayjs(record.startTime).format('MM/DD')} - ${dayjs(record.endTime).format('MM/DD')}`
             : '-'}
@@ -160,20 +156,20 @@ export default function AdsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-bold tracking-tight text-black">
           广告管理
         </h1>
         <Button
           type="primary"
           icon={<PlusOutlined />}
           onClick={handleAdd}
-          className="font-medium"
+          className="font-bold"
         >
           新增广告
         </Button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white border border-black p-6">
         <Table
           columns={columns}
           dataSource={data}

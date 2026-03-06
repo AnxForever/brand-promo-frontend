@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Table, Button, Tag, Space, App } from 'antd';
-import { EyeOutlined } from '@ant-design/icons';
+import { Table, Button, Tag, Space, Select, App } from 'antd';
+import { EyeOutlined, FilterOutlined } from '@ant-design/icons';
 import { orderApi, ORDER_STATUS_MAP } from '../../api';
 
 const statusConfig: Record<string, { text: string; color: string }> = {
@@ -28,18 +28,30 @@ function mapOrderRow(entry: any) {
   };
 }
 
+const statusFilterOptions = [
+  { value: '', label: '全部状态' },
+  { value: '0', label: '待支付' },
+  { value: '1', label: '已支付' },
+  { value: '2', label: '已发货' },
+  { value: '3', label: '已完成' },
+  { value: '4', label: '已取消' },
+];
+
 export default function OrdersPage() {
   const [data, setData] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<string>('');
   const navigate = useNavigate();
   const { message } = App.useApp();
 
-  const fetchData = async (p = page) => {
+  const fetchData = async (p = page, status = statusFilter) => {
     setLoading(true);
     try {
-      const res = await orderApi.list({ page: p, size: 10 });
+      const params: Record<string, any> = { page: p, size: 10 };
+      if (status !== '') params.status = Number(status);
+      const res = await orderApi.list(params);
       if (res.success) {
         const rawList: any[] = res.data?.list ?? [];
         setData(rawList.map(mapOrderRow));
@@ -102,7 +114,7 @@ export default function OrdersPage() {
       dataIndex: 'orderNo',
       width: 180,
       render: (v: string, record: any) => (
-        <span className="font-mono text-xs text-slate-500">
+        <span className="font-mono text-xs text-gray-600">
           {v ?? `#${record.id}`}
         </span>
       ),
@@ -127,7 +139,7 @@ export default function OrdersPage() {
       dataIndex: 'totalAmount',
       width: 110,
       render: (v: number) => (
-        <span className="font-semibold text-slate-900">
+        <span className="font-bold text-black">
           ¥{v?.toFixed(2) ?? '0.00'}
         </span>
       ),
@@ -138,11 +150,7 @@ export default function OrdersPage() {
       width: 100,
       render: (v: string) => {
         const cfg = statusConfig[v] ?? { text: v, color: 'default' };
-        return (
-          <Tag color={cfg.color} className="rounded-md">
-            {cfg.text}
-          </Tag>
-        );
+        return <Tag color={cfg.color}>{cfg.text}</Tag>;
       },
     },
     {
@@ -150,7 +158,7 @@ export default function OrdersPage() {
       dataIndex: 'createdAt',
       width: 120,
       render: (v: string) => (
-        <span className="text-xs text-slate-400">
+        <span className="text-xs text-gray-500">
           {v ? new Date(v).toLocaleDateString() : '-'}
         </span>
       ),
@@ -202,11 +210,27 @@ export default function OrdersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight text-slate-900 mb-6">
+      <h1 className="text-2xl font-bold tracking-tight text-black mb-6">
         订单管理
       </h1>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white border border-black p-6">
+        <div className="mb-4">
+          <Space wrap>
+            <FilterOutlined className="text-gray-500" />
+            <Select
+              value={statusFilter}
+              onChange={(val) => {
+                setStatusFilter(val);
+                setPage(1);
+                fetchData(1, val);
+              }}
+              className="w-36"
+              options={statusFilterOptions}
+            />
+          </Space>
+        </div>
+
         <Table
           columns={columns}
           dataSource={data}

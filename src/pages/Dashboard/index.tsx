@@ -42,22 +42,22 @@ const statCards = [
     key: 'userCount' as const,
     label: '用户总数',
     icon: <UserOutlined />,
-    lightColor: 'bg-blue-50',
-    textColor: 'text-blue-600',
+    bg: 'bg-red-50',
+    text: 'text-red-600',
   },
   {
     key: 'productCount' as const,
     label: '商品总数',
     icon: <ShoppingOutlined />,
-    lightColor: 'bg-emerald-50',
-    textColor: 'text-emerald-600',
+    bg: 'bg-emerald-50',
+    text: 'text-emerald-600',
   },
   {
     key: 'adCount' as const,
     label: '广告总数',
     icon: <NotificationOutlined />,
-    lightColor: 'bg-amber-50',
-    textColor: 'text-amber-600',
+    bg: 'bg-amber-50',
+    text: 'text-amber-600',
   },
 ];
 
@@ -114,25 +114,22 @@ export default function DashboardPage() {
     xAxis: {
       type: 'category' as const,
       data: ops.map((o) => o.name),
-      axisLabel: { fontSize: 11, color: '#64748b' },
-      axisLine: { lineStyle: { color: '#e5e7eb' } },
+      axisLabel: { fontSize: 11, color: '#555' },
+      axisLine: { lineStyle: { color: '#000' } },
       axisTick: { show: false },
     },
     yAxis: {
       type: 'value' as const,
-      axisLabel: { fontSize: 11, color: '#64748b' },
-      splitLine: { lineStyle: { color: '#f1f5f9' } },
+      axisLabel: { fontSize: 11, color: '#555' },
+      splitLine: { lineStyle: { color: '#e0e0e0' } },
     },
     series: [
       {
         type: 'bar',
         data: ops.map((o) => o.value),
         itemStyle: {
-          borderRadius: [4, 4, 0, 0],
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#3b82f6' },
-            { offset: 1, color: '#2563eb' },
-          ]),
+          borderRadius: 0,
+          color: '#e53935',
         },
         barWidth: 32,
       },
@@ -150,14 +147,14 @@ export default function DashboardPage() {
           name: o.name,
           value: o.value,
           itemStyle: {
-            color: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899'][
+            color: ['#e53935', '#2e7d32', '#f57f17', '#111', '#8b5cf6', '#0891b2', '#db2777'][
               i % 7
             ],
           },
         })),
-        label: { fontSize: 11, color: '#64748b' },
+        label: { fontSize: 11, color: '#555' },
         emphasis: {
-          itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.1)' },
+          itemStyle: { shadowBlur: 0 },
         },
       },
     ],
@@ -165,7 +162,7 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight text-slate-900 mb-6">
+      <h1 className="text-2xl font-bold tracking-tight text-black mb-6">
         仪表盘
       </h1>
 
@@ -174,17 +171,17 @@ export default function DashboardPage() {
         {statCards.map((card) => (
           <div
             key={card.key}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+            className="bg-white border border-black p-6"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500 mb-1">{card.label}</p>
-                <p className="text-3xl font-semibold tracking-tight text-slate-900">
+                <p className="text-sm text-gray-600 mb-1">{card.label}</p>
+                <p className="text-3xl font-bold tracking-tight text-black">
                   {data?.[card.key] ?? 0}
                 </p>
               </div>
               <div
-                className={`w-12 h-12 rounded-xl ${card.lightColor} ${card.textColor} flex items-center justify-center text-xl`}
+                className={`w-12 h-12 ${card.bg} ${card.text} flex items-center justify-center text-xl`}
               >
                 {card.icon}
               </div>
@@ -195,8 +192,8 @@ export default function DashboardPage() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-base font-semibold text-slate-900 mb-4">
+        <div className="bg-white border border-black p-6">
+          <h2 className="text-base font-bold text-black mb-4">
             近 30 天操作统计
           </h2>
           {ops.length > 0 ? (
@@ -206,14 +203,14 @@ export default function DashboardPage() {
               style={{ height: 280 }}
             />
           ) : (
-            <div className="flex items-center justify-center h-[280px] text-slate-400">
+            <div className="flex items-center justify-center h-[280px] text-gray-500">
               暂无操作数据
             </div>
           )}
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-base font-semibold text-slate-900 mb-4">
+        <div className="bg-white border border-black p-6">
+          <h2 className="text-base font-bold text-black mb-4">
             操作类型分布
           </h2>
           {ops.length > 0 ? (
@@ -223,7 +220,7 @@ export default function DashboardPage() {
               style={{ height: 280 }}
             />
           ) : (
-            <div className="flex items-center justify-center h-[280px] text-slate-400">
+            <div className="flex items-center justify-center h-[280px] text-gray-500">
               暂无操作数据
             </div>
           )}
@@ -233,10 +230,10 @@ export default function DashboardPage() {
       {/* Recommendations */}
       {recommendations.length > 0 && (
         <div className="mt-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-white border border-black p-6">
             <div className="flex items-center gap-2 mb-4">
               <StarOutlined className="text-amber-500" />
-              <h2 className="text-base font-semibold text-slate-900">
+              <h2 className="text-base font-bold text-black">
                 为你推荐
               </h2>
             </div>
@@ -246,19 +243,19 @@ export default function DashboardPage() {
                   key={item.id}
                   className="group cursor-pointer"
                 >
-                  <div className="aspect-square rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden mb-2">
+                  <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden mb-2">
                     {item.imageUrl ? (
                       <img
                         src={item.imageUrl}
                         alt={item.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        className="w-full h-full object-cover"
                       />
                     ) : (
-                      <ShoppingOutlined className="text-2xl text-slate-300" />
+                      <ShoppingOutlined className="text-2xl text-gray-400" />
                     )}
                   </div>
-                  <h3 className="text-xs text-slate-700 truncate">{item.name}</h3>
-                  <span className="text-xs font-semibold text-blue-600">
+                  <h3 className="text-xs text-gray-700 truncate">{item.name}</h3>
+                  <span className="text-xs font-bold text-red-600">
                     ¥{item.price?.toFixed(2)}
                   </span>
                 </div>

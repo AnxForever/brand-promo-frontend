@@ -1,40 +1,38 @@
 @import "tailwindcss";
 
 /* ============================================
-   Corporate Clean — Design Tokens
+   Swiss International Style — Design Tokens
    ============================================ */
 @theme {
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-primary-light: #dbeafe;
-  --color-bg: #f8fafc;
+  --color-primary: #e53935;
+  --color-primary-hover: #c62828;
+  --color-primary-light: #ffebee;
+  --color-bg: #f5f5f5;
   --color-surface: #ffffff;
-  --color-border: #e5e7eb;
-  --color-text: #0f172a;
-  --color-text-secondary: #64748b;
-  --color-success: #16a34a;
-  --color-warning: #d97706;
-  --color-danger: #dc2626;
-  --radius-card: 0.75rem;
-  --radius-btn: 0.5rem;
-  --radius-input: 0.5rem;
-  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --color-border: #000000;
+  --color-text: #111111;
+  --color-text-secondary: #555555;
+  --color-success: #2e7d32;
+  --color-warning: #f57f17;
+  --color-danger: #b71c1c;
 }
 
 /* ============================================
-   Base Styles
+   Base Styles — Swiss Sans-Serif Foundation
    ============================================ */
 body {
   margin: 0;
   background-color: var(--color-bg);
   color: var(--color-text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, Arial, 'Noto Sans SC',
+    'PingFang SC', 'Microsoft YaHei', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Ant Design overrides for Corporate Clean */
+/* ============================================
+   Ant Design — Swiss Overrides
+   ============================================ */
 .ant-layout {
   background: var(--color-bg) !important;
 }
@@ -44,46 +42,104 @@ body {
 }
 
 .ant-table-wrapper .ant-table-tbody > tr:hover > td {
-  background: #f8fafc !important;
+  background: #fafafa !important;
 }
 
+/* Cards: sharp corners, black border, no shadow */
 .ant-card {
-  border-radius: var(--radius-card) !important;
-  box-shadow: var(--shadow-card) !important;
-  border: 1px solid var(--color-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border: 1px solid #000 !important;
 }
 
+/* Modals: sharp corners */
 .ant-modal .ant-modal-content {
-  border-radius: var(--radius-card) !important;
+  border-radius: 0 !important;
 }
 
+/* Buttons: sharp, flat, opacity transition */
 .ant-btn {
-  border-radius: var(--radius-btn) !important;
-  transition: all 200ms ease !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  font-weight: 700;
+  transition: opacity 150ms ease !important;
 }
 
 .ant-btn:hover {
-  transform: translateY(-0.5px);
-  box-shadow: 0 2px 4px rgb(0 0 0 / 0.1);
+  opacity: 0.85;
+  transform: none;
+  box-shadow: none !important;
 }
 
 .ant-btn:active {
-  transform: scale(0.98);
+  opacity: 0.7;
+  transform: none;
 }
 
+/* Inputs: sharp corners, black border */
 .ant-input,
 .ant-select-selector,
-.ant-picker {
-  border-radius: var(--radius-input) !important;
+.ant-picker,
+.ant-input-number,
+.ant-input-affix-wrapper {
+  border-radius: 0 !important;
+  border-color: #000 !important;
 }
 
 .ant-input:focus,
 .ant-input-focused,
-.ant-select-focused .ant-select-selector {
-  box-shadow: 0 0 0 2px rgb(37 99 235 / 0.2) !important;
+.ant-input-affix-wrapper-focused,
+.ant-select-focused .ant-select-selector,
+.ant-input-number-focused {
+  box-shadow: none !important;
+  border-color: #e53935 !important;
 }
 
-/* Scrollbar */
+/* Table: sharp corners, black borders */
+.ant-table {
+  border-radius: 0 !important;
+}
+
+.ant-table-container {
+  border-radius: 0 !important;
+}
+
+.ant-table-wrapper .ant-table-container table > thead > tr:first-child > *:first-child {
+  border-start-start-radius: 0 !important;
+}
+
+.ant-table-wrapper .ant-table-container table > thead > tr:first-child > *:last-child {
+  border-start-end-radius: 0 !important;
+}
+
+/* Pagination: sharp */
+.ant-pagination .ant-pagination-item {
+  border-radius: 0 !important;
+}
+
+/* Dropdown / Popover: sharp */
+.ant-dropdown .ant-dropdown-menu,
+.ant-popover .ant-popover-inner,
+.ant-popconfirm .ant-popover-inner {
+  border-radius: 0 !important;
+}
+
+/* Tag: sharp */
+.ant-tag {
+  border-radius: 0 !important;
+}
+
+/* Checkbox: sharp */
+.ant-checkbox .ant-checkbox-inner {
+  border-radius: 0 !important;
+}
+
+/* Message: sharp */
+.ant-message .ant-message-notice-content {
+  border-radius: 0 !important;
+}
+
+/* Scrollbar — neutral, minimal */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -93,10 +149,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
+  background: #999;
+  border-radius: 0;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #666;
 }
