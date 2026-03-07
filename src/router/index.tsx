@@ -14,11 +14,17 @@ import OrdersPage from '../pages/Orders';
 import OrderDetailPage from '../pages/OrderDetail';
 import CouponsPage from '../pages/Coupons';
 import CategoriesPage from '../pages/Categories';
+import Forbidden from '../pages/Status/403';
+import NotFound from '../pages/Status/404';
 
 const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+  },
+  {
+    path: '/403',
+    element: <Forbidden />,
   },
   {
     path: '/',
@@ -48,7 +54,12 @@ const router = createBrowserRouter([
           </AuthGuard>
         ),
       },
+      { path: '*', element: <NotFound /> },
     ],
+  },
+  {
+    path: '*',
+    element: <NotFound />,
   },
 ]);
 

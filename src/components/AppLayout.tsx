@@ -23,12 +23,12 @@ const menuItems = [
   { key: '/dashboard', icon: <DashboardOutlined />, label: '仪表盘' },
   { key: '/products', icon: <ShoppingOutlined />, label: '商品管理' },
   { key: '/categories', icon: <AppstoreOutlined />, label: '分类管理' },
-  { key: '/brands', icon: <TagOutlined />, label: '品牌管理' },
-  { key: '/ads', icon: <NotificationOutlined />, label: '广告管理' },
+  { key: '/brands', icon: <TagOutlined />, label: '品牌管理', roles: ['ADMIN'] },
+  { key: '/ads', icon: <NotificationOutlined />, label: '广告管理', roles: ['ADMIN'] },
   { key: '/cart', icon: <ShoppingCartOutlined />, label: '购物车' },
   { key: '/orders', icon: <FileTextOutlined />, label: '订单管理' },
   { key: '/coupons', icon: <GiftOutlined />, label: '优惠券管理' },
-  { key: '/users', icon: <UserOutlined />, label: '用户管理' },
+  { key: '/users', icon: <UserOutlined />, label: '用户管理', roles: ['ADMIN'] },
 ];
 
 export default function AppLayout() {
@@ -38,6 +38,10 @@ export default function AppLayout() {
   const { user, logout } = useAuthStore();
 
   const selectedKey = '/' + location.pathname.split('/')[1];
+
+  const visibleMenuItems = menuItems.filter(
+    (item) => !item.roles || (user?.role && item.roles.includes(user.role)),
+  );
 
   const handleMenuClick = ({ key }: { key: string }) => {
     navigate(key);
@@ -85,7 +89,7 @@ export default function AppLayout() {
         <Menu
           mode="inline"
           selectedKeys={[selectedKey]}
-          items={menuItems}
+          items={visibleMenuItems}
           onClick={handleMenuClick}
           className="border-none mt-2 font-sans"
           style={{ background: 'transparent' }}
