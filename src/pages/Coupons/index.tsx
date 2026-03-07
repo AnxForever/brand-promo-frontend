@@ -47,6 +47,7 @@ export default function CouponsPage() {
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [form] = Form.useForm();
   const { message } = App.useApp();
   const { user } = useAuthStore();
@@ -109,13 +110,14 @@ export default function CouponsPage() {
   };
 
   const handleSubmit = async () => {
-    const values = await form.validateFields();
-    const payload = {
-      ...values,
-      startTime: values.startTime?.format('YYYY-MM-DD HH:mm:ss'),
-      endTime: values.endTime?.format('YYYY-MM-DD HH:mm:ss'),
-    };
     try {
+      setSubmitting(true);
+      const values = await form.validateFields();
+      const payload = {
+        ...values,
+        startTime: values.startTime?.format('YYYY-MM-DD HH:mm:ss'),
+        endTime: values.endTime?.format('YYYY-MM-DD HH:mm:ss'),
+      };
       if (editingId) {
         await couponApi.update(editingId, payload);
         message.success('更新成功');
@@ -125,8 +127,11 @@ export default function CouponsPage() {
       }
       setModalOpen(false);
       fetchCoupons();
-    } catch {
-      message.error('操作失败');
+    } catch (err: any) {
+      if (err?.errorFields) return;
+      message.error(err?.message || '操作失败，请重试');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -391,6 +396,7 @@ export default function CouponsPage() {
         }
         open={modalOpen}
         onOk={handleSubmit}
+        confirmLoading={submitting}
         onCancel={() => setModalOpen(false)}
         destroyOnHidden
       >

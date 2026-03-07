@@ -22,6 +22,7 @@ export default function AdsPage() {
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [form] = Form.useForm();
   const { message } = App.useApp();
 
@@ -65,22 +66,30 @@ export default function AdsPage() {
   };
 
   const handleSubmit = async () => {
-    const values = await form.validateFields();
-    const payload = {
-      ...values,
-      startTime: values.startTime?.format('YYYY-MM-DD HH:mm:ss'),
-      endTime: values.endTime?.format('YYYY-MM-DD HH:mm:ss'),
-    };
+    try {
+      setSubmitting(true);
+      const values = await form.validateFields();
+      const payload = {
+        ...values,
+        startTime: values.startTime?.format('YYYY-MM-DD HH:mm:ss'),
+        endTime: values.endTime?.format('YYYY-MM-DD HH:mm:ss'),
+      };
 
-    if (editingId) {
-      await adApi.update(editingId, payload);
-      message.success('更新成功');
-    } else {
-      await adApi.create(payload);
-      message.success('创建成功');
+      if (editingId) {
+        await adApi.update(editingId, payload);
+        message.success('更新成功');
+      } else {
+        await adApi.create(payload);
+        message.success('创建成功');
+      }
+      setModalOpen(false);
+      fetchData();
+    } catch (err: any) {
+      if (err?.errorFields) return;
+      message.error(err?.message || '操作失败，请重试');
+    } finally {
+      setSubmitting(false);
     }
-    setModalOpen(false);
-    fetchData();
   };
 
   const statusMap: Record<number, { text: string; color: string }> = {
@@ -192,6 +201,7 @@ export default function AdsPage() {
         title={editingId ? '编辑广告' : '新增广告'}
         open={modalOpen}
         onOk={handleSubmit}
+        confirmLoading={submitting}
         onCancel={() => setModalOpen(false)}
         destroyOnHidden
       >

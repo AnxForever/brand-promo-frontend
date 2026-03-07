@@ -35,6 +35,7 @@ export default function ProductsPage() {
   const [categories, setCategories] = useState<string[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [form] = Form.useForm();
   const { message } = App.useApp();
   const navigate = useNavigate();
@@ -101,16 +102,24 @@ export default function ProductsPage() {
   };
 
   const handleSubmit = async () => {
-    const values = await form.validateFields();
-    if (editingId) {
-      await productApi.update(editingId, values);
-      message.success('更新成功');
-    } else {
-      await productApi.create(values);
-      message.success('创建成功');
+    try {
+      setSubmitting(true);
+      const values = await form.validateFields();
+      if (editingId) {
+        await productApi.update(editingId, values);
+        message.success('更新成功');
+      } else {
+        await productApi.create(values);
+        message.success('创建成功');
+      }
+      setModalOpen(false);
+      fetchData();
+    } catch (err: any) {
+      if (err?.errorFields) return;
+      message.error(err?.message || '操作失败，请重试');
+    } finally {
+      setSubmitting(false);
     }
-    setModalOpen(false);
-    fetchData();
   };
 
   const columns = [
@@ -246,6 +255,7 @@ export default function ProductsPage() {
         title={editingId ? '编辑商品' : '新增商品'}
         open={modalOpen}
         onOk={handleSubmit}
+        confirmLoading={submitting}
         onCancel={() => setModalOpen(false)}
         destroyOnHidden
       >
