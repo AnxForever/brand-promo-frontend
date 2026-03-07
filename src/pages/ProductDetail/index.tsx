@@ -29,6 +29,7 @@ interface Product {
   originalPrice?: number;
   category?: string;
   brandId?: number;
+  brandName?: string;
   status: number;
   stock?: number;
   salesCount?: number;
