@@ -16,6 +16,7 @@ import {
 } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import { statsApi, recommendApi } from '../../api';
+import { useAuthStore } from '../../store/authStore';
 
 echarts.use([
   BarChart,
@@ -90,15 +91,22 @@ export default function DashboardPage() {
   const [ops, setOps] = useState<{ name: string; value: number }[]>([]);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuthStore();
+  const isAdmin = user?.role === 'ADMIN';
 
   useEffect(() => {
-    Promise.all([statsApi.overview(), statsApi.operations(), recommendApi.list()])
-      .then(([overviewRes, opsRes, recRes]) => {
-        if (overviewRes.success) setData(overviewRes.data);
-        if (opsRes.success) setOps(aggregateOps(opsRes.data));
-        if (recRes.success) setRecommendations(recRes.data ?? []);
-      })
-      .finally(() => setLoading(false));
+    Promise.allSettled([
+      isAdmin ? statsApi.overview() : Promise.reject('skip'),
+      isAdmin ? statsApi.operations() : Promise.reject('skip'),
+      recommendApi.list(),
+    ]).then(([overviewRes, opsRes, recRes]) => {
+      if (overviewRes.status === 'fulfilled' && overviewRes.value.success)
+        setData(overviewRes.value.data);
+      if (opsRes.status === 'fulfilled' && opsRes.value.success)
+        setOps(aggregateOps(opsRes.value.data));
+      if (recRes.status === 'fulfilled' && recRes.value.success)
+        setRecommendations(recRes.value.data ?? []);
+    }).finally(() => setLoading(false));
   }, []);
 
   if (loading)
@@ -167,6 +175,7 @@ export default function DashboardPage() {
       </h1>
 
       {/* Stat Cards */}
+      {isAdmin && (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         {statCards.map((card) => (
           <div
@@ -189,8 +198,10 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
+      )}
 
       {/* Charts */}
+      {isAdmin && (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white border border-black p-6">
           <h2 className="text-base font-bold text-black mb-4">
@@ -226,6 +237,7 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+      )}
 
       {/* Recommendations */}
       {recommendations.length > 0 && (
