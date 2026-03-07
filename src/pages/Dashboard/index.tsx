@@ -111,8 +111,30 @@ export default function DashboardPage() {
 
   if (loading)
     return (
-      <div className="flex items-center justify-center h-64">
-        <Spin size="large" />
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-black mb-6">
+          仪表盘
+        </h1>
+        {isAdmin && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            {statCards.map((card) => (
+              <div key={card.key} className="bg-white border border-black p-6 animate-pulse">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="h-4 w-16 bg-gray-200 mb-2" />
+                    <div className="h-8 w-24 bg-gray-200" />
+                  </div>
+                  <div className={`w-12 h-12 ${card.bg} ${card.text} flex items-center justify-center text-xl`}>
+                    {card.icon}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="flex items-center justify-center h-40">
+          <Spin size="large" />
+        </div>
       </div>
     );
 
