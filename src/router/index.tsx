@@ -44,6 +44,7 @@ const router = createBrowserRouter([
       { path: 'brands', element: lazily(() => import('../pages/Brands')) },
       { path: 'ads', element: lazily(() => import('../pages/Ads')) },
       { path: 'cart', element: lazily(() => import('../pages/Cart')) },
+      { path: 'favorites', element: lazily(() => import('../pages/Favorites')) },
       { path: 'checkout', element: lazily(() => import('../pages/Checkout')) },
       { path: 'orders', element: lazily(() => import('../pages/Orders')) },
       { path: 'orders/:id', element: lazily(() => import('../pages/OrderDetail')) },

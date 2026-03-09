@@ -16,10 +16,12 @@ import {
 } from 'antd';
 import {
   ArrowLeftOutlined,
+  HeartFilled,
+  HeartOutlined,
   ShoppingCartOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { productApi, cartApi, reviewApi, browseHistoryApi } from '../../api';
+import { browseHistoryApi, cartApi, favoriteApi, productApi, reviewApi } from '../../api';
 
 interface Product {
   id: number;
@@ -72,6 +74,8 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [addingCart, setAddingCart] = useState(false);
+  const [favorited, setFavorited] = useState(false);
+  const [favoriting, setFavoriting] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState(0);
   const [reviewForm] = Form.useForm();
@@ -83,9 +87,10 @@ export default function ProductDetailPage() {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [prodRes, reviewRes] = await Promise.allSettled([
+        const [prodRes, reviewRes, favoriteRes] = await Promise.allSettled([
           productApi.detail(Number(id)),
           reviewApi.listByProduct(Number(id)),
+          favoriteApi.check(Number(id)),
         ]);
         if (prodRes.status === 'fulfilled' && prodRes.value.success) {
           setProduct(prodRes.value.data);
@@ -93,6 +98,11 @@ export default function ProductDetailPage() {
         if (reviewRes.status === 'fulfilled' && reviewRes.value.success) {
           const list = reviewRes.value.data?.list ?? reviewRes.value.data ?? [];
           setReviews(list);
+        }
+        if (favoriteRes.status === 'fulfilled' && favoriteRes.value.success) {
+          setFavorited(!!favoriteRes.value.data?.favorited);
+        } else {
+          setFavorited(false);
         }
         browseHistoryApi.record(Number(id)).catch(() => {});
       } finally {
@@ -112,6 +122,26 @@ export default function ProductDetailPage() {
       message.error('加入购物车失败');
     } finally {
       setAddingCart(false);
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!product) return;
+    setFavoriting(true);
+    try {
+      if (favorited) {
+        await favoriteApi.remove(product.id);
+        setFavorited(false);
+        message.success('已取消收藏');
+      } else {
+        await favoriteApi.add(product.id);
+        setFavorited(true);
+        message.success('收藏成功');
+      }
+    } catch {
+      message.error(favorited ? '取消收藏失败' : '收藏失败');
+    } finally {
+      setFavoriting(false);
     }
   };
 
@@ -272,17 +302,29 @@ export default function ProductDetailPage() {
                         onChange={(v) => setQuantity(v ?? 1)}
                       />
                     </div>
-                    <Button
-                      type="primary"
-                      size="large"
-                      icon={<ShoppingCartOutlined />}
-                      className="mt-4 font-bold w-full md:w-auto px-12"
-                      loading={addingCart}
-                      onClick={handleAddToCart}
-                      disabled={product.status !== 1}
-                    >
-                      加入购物车
-                    </Button>
+                    <div className="mt-4 flex flex-col md:flex-row gap-3">
+                      <Button
+                        size="large"
+                        icon={favorited ? <HeartFilled /> : <HeartOutlined />}
+                        className="font-bold w-full md:w-auto px-8"
+                        loading={favoriting}
+                        danger={favorited}
+                        onClick={handleToggleFavorite}
+                      >
+                        {favorited ? '已收藏' : '收藏商品'}
+                      </Button>
+                      <Button
+                        type="primary"
+                        size="large"
+                        icon={<ShoppingCartOutlined />}
+                        className="font-bold w-full md:w-auto px-12"
+                        loading={addingCart}
+                        onClick={handleAddToCart}
+                        disabled={product.status !== 1}
+                      >
+                        加入购物车
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>

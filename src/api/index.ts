@@ -111,6 +111,14 @@ export const browseHistoryApi = {
     request.post<any, any>('/browse-history', { productId }),
 };
 
+// ---- 收藏 ----
+export const favoriteApi = {
+  list: () => request.get<any, any>('/favorites'),
+  check: (productId: number) => request.get<any, any>(`/favorites/check/${productId}`),
+  add: (productId: number) => request.post<any, any>(`/favorites/${productId}`),
+  remove: (productId: number) => request.delete<any, any>(`/favorites/${productId}`),
+};
+
 // ---- 优惠券 ----
 export const couponApi = {
   list: () => request.get<any, any>('/coupons'),

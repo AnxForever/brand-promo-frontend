@@ -14,6 +14,7 @@ import {
   MenuUnfoldOutlined,
   TagOutlined,
   AppstoreOutlined,
+  HeartOutlined,
 } from '@ant-design/icons';
 import { useAuthStore } from '../store/authStore';
 
@@ -26,6 +27,7 @@ const menuItems = [
   { key: '/brands', icon: <TagOutlined />, label: '品牌管理', roles: ['ADMIN'] },
   { key: '/ads', icon: <NotificationOutlined />, label: '广告管理', roles: ['ADMIN'] },
   { key: '/cart', icon: <ShoppingCartOutlined />, label: '购物车' },
+  { key: '/favorites', icon: <HeartOutlined />, label: '我的收藏' },
   { key: '/orders', icon: <FileTextOutlined />, label: '订单管理' },
   { key: '/coupons', icon: <GiftOutlined />, label: '优惠券管理' },
   { key: '/users', icon: <UserOutlined />, label: '用户管理', roles: ['ADMIN'] },
