@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Spin } from 'antd';
+import { Alert, Spin } from 'antd';
 import {
   ShoppingOutlined,
   UserOutlined,
@@ -91,23 +91,34 @@ export default function DashboardPage() {
   const [ops, setOps] = useState<{ name: string; value: number }[]>([]);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statsError, setStatsError] = useState<string | null>(null);
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'ADMIN';
 
   useEffect(() => {
+    setStatsError(null);
+
     Promise.allSettled([
       isAdmin ? statsApi.overview() : Promise.reject('skip'),
       isAdmin ? statsApi.operations() : Promise.reject('skip'),
       recommendApi.list(),
     ]).then(([overviewRes, opsRes, recRes]) => {
-      if (overviewRes.status === 'fulfilled' && overviewRes.value.success)
+      if (overviewRes.status === 'fulfilled' && overviewRes.value.success) {
         setData(overviewRes.value.data);
-      if (opsRes.status === 'fulfilled' && opsRes.value.success)
+      } else if (isAdmin) {
+        setStatsError('统计接口无权限访问，请重新登录管理员账号。');
+      }
+
+      if (opsRes.status === 'fulfilled' && opsRes.value.success) {
         setOps(aggregateOps(opsRes.value.data));
+      } else if (isAdmin) {
+        setStatsError((message) => message ?? '操作统计加载失败，请检查账号权限。');
+      }
+
       if (recRes.status === 'fulfilled' && recRes.value.success)
         setRecommendations(recRes.value.data ?? []);
     }).finally(() => setLoading(false));
-  }, []);
+  }, [isAdmin]);
 
   if (loading)
     return (
@@ -198,28 +209,40 @@ export default function DashboardPage() {
 
       {/* Stat Cards */}
       {isAdmin && (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        {statCards.map((card) => (
-          <div
-            key={card.key}
-            className="bg-white border border-black p-6"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">{card.label}</p>
-                <p className="text-3xl font-bold tracking-tight text-black">
-                  {data?.[card.key] ?? 0}
-                </p>
-              </div>
+        <>
+          {statsError && (
+            <Alert
+              type="warning"
+              showIcon
+              message={statsError}
+              className="mb-6 border border-black"
+            />
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            {statCards.map((card) => (
               <div
-                className={`w-12 h-12 ${card.bg} ${card.text} flex items-center justify-center text-xl`}
+                key={card.key}
+                className="bg-white border border-black p-6"
               >
-                {card.icon}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">{card.label}</p>
+                    <p className="text-3xl font-bold tracking-tight text-black">
+                      {statsError ? '--' : data?.[card.key] ?? 0}
+                    </p>
+                  </div>
+                  <div
+                    className={`w-12 h-12 ${card.bg} ${card.text} flex items-center justify-center text-xl`}
+                  >
+                    {card.icon}
+                  </div>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
+
+        </>
       )}
 
       {/* Charts */}

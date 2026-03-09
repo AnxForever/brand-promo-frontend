@@ -1,9 +1,17 @@
+import { useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { ConfigProvider, App as AntApp } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import router from './router';
+import { useAuthStore } from './store/authStore';
 
 function App() {
+  const validateSession = useAuthStore((state) => state.validateSession);
+
+  useEffect(() => {
+    validateSession();
+  }, [validateSession]);
+
   return (
     <ConfigProvider
       locale={zhCN}

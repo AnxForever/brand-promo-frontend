@@ -1,4 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom';
+import { Spin } from 'antd';
 import { useAuthStore } from '../store/authStore';
 
 interface Props {
@@ -7,8 +8,16 @@ interface Props {
 }
 
 export default function AuthGuard({ children, roles }: Props) {
-  const { isLoggedIn, user } = useAuthStore();
+  const { isLoggedIn, user, initialized } = useAuthStore();
   const location = useLocation();
+
+  if (!initialized) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Spin size="large" />
+      </div>
+    );
+  }
 
   if (!isLoggedIn) {
     return <Navigate to="/login" state={{ from: location }} replace />;
