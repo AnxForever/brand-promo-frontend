@@ -15,6 +15,8 @@ import {
 } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { productApi } from '../../api';
+import { useAuthStore } from '../../store/authStore';
+import StorefrontProductsPage from './Storefront';
 
 const sortOptions = [
   { value: '', label: '默认排序' },
@@ -24,7 +26,7 @@ const sortOptions = [
   { value: 'newest', label: '最新上架' },
 ];
 
-export default function ProductsPage() {
+function ManagerProductsPage() {
   const [data, setData] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -294,4 +296,11 @@ export default function ProductsPage() {
       </Modal>
     </div>
   );
+}
+
+export default function ProductsPage() {
+  const role = useAuthStore((state) => state.user?.role);
+  const isManager = role === 'ADMIN' || role === 'MERCHANT';
+
+  return isManager ? <ManagerProductsPage /> : <StorefrontProductsPage />;
 }

@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { Spin } from 'antd';
 import AppLayout from '../components/AppLayout';
 import AuthGuard from '../components/AuthGuard';
+import { useAuthStore } from '../store/authStore';
 
 const PageLoader = (
   <div className="flex items-center justify-center h-64">
@@ -17,6 +18,11 @@ function lazily(factory: () => Promise<{ default: React.ComponentType }>) {
       <Component />
     </Suspense>
   );
+}
+
+function HomeRedirect() {
+  const role = useAuthStore((state) => state.user?.role);
+  return <Navigate to={role === 'ADMIN' ? '/dashboard' : '/products'} replace />;
 }
 
 const router = createBrowserRouter([
@@ -36,13 +42,34 @@ const router = createBrowserRouter([
       </AuthGuard>
     ),
     children: [
-      { index: true, element: <Navigate to="/dashboard" replace /> },
+      { index: true, element: <HomeRedirect /> },
       { path: 'dashboard', element: lazily(() => import('../pages/Dashboard')) },
       { path: 'products', element: lazily(() => import('../pages/Products')) },
       { path: 'products/:id', element: lazily(() => import('../pages/ProductDetail')) },
-      { path: 'categories', element: lazily(() => import('../pages/Categories')) },
-      { path: 'brands', element: lazily(() => import('../pages/Brands')) },
-      { path: 'ads', element: lazily(() => import('../pages/Ads')) },
+      {
+        path: 'categories',
+        element: (
+          <AuthGuard roles={['ADMIN']}>
+            {lazily(() => import('../pages/Categories'))}
+          </AuthGuard>
+        ),
+      },
+      {
+        path: 'brands',
+        element: (
+          <AuthGuard roles={['ADMIN']}>
+            {lazily(() => import('../pages/Brands'))}
+          </AuthGuard>
+        ),
+      },
+      {
+        path: 'ads',
+        element: (
+          <AuthGuard roles={['ADMIN']}>
+            {lazily(() => import('../pages/Ads'))}
+          </AuthGuard>
+        ),
+      },
       { path: 'cart', element: lazily(() => import('../pages/Cart')) },
       { path: 'favorites', element: lazily(() => import('../pages/Favorites')) },
       { path: 'checkout', element: lazily(() => import('../pages/Checkout')) },

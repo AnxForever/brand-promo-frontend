@@ -23,7 +23,7 @@ const { Header, Sider, Content } = Layout;
 const menuItems = [
   { key: '/dashboard', icon: <DashboardOutlined />, label: '仪表盘' },
   { key: '/products', icon: <ShoppingOutlined />, label: '商品管理' },
-  { key: '/categories', icon: <AppstoreOutlined />, label: '分类管理' },
+  { key: '/categories', icon: <AppstoreOutlined />, label: '分类管理', roles: ['ADMIN'] },
   { key: '/brands', icon: <TagOutlined />, label: '品牌管理', roles: ['ADMIN'] },
   { key: '/ads', icon: <NotificationOutlined />, label: '广告管理', roles: ['ADMIN'] },
   { key: '/cart', icon: <ShoppingCartOutlined />, label: '购物车' },
@@ -43,7 +43,11 @@ export default function AppLayout() {
 
   const visibleMenuItems = menuItems.filter(
     (item) => !item.roles || (user?.role && item.roles.includes(user.role)),
-  );
+  ).map((item) => (
+    item.key === '/products' && user?.role === 'USER'
+      ? { ...item, label: '商品商城' }
+      : item
+  ));
 
   const handleMenuClick = ({ key }: { key: string }) => {
     navigate(key);
