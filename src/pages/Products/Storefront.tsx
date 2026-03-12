@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState, type MouseEvent } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   App,
   Button,
@@ -11,7 +11,6 @@ import {
   Tag,
 } from 'antd';
 import {
-  EyeOutlined,
   FireOutlined,
   HeartFilled,
   HeartOutlined,
@@ -20,6 +19,7 @@ import {
   ShoppingCartOutlined,
 } from '@ant-design/icons';
 import { cartApi, favoriteApi, productApi, recommendApi } from '../../api';
+import { useAuthStore } from '../../store/authStore';
 
 interface StorefrontProduct {
   id: number;
@@ -62,7 +62,10 @@ export default function StorefrontProductsPage() {
   const [sortBy, setSortBy] = useState('newest');
   const [processingId, setProcessingId] = useState<number | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { message } = App.useApp();
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const currentRoute = `${location.pathname}${location.search}`;
 
   const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
   const activePromoCount = useMemo(
@@ -74,7 +77,7 @@ export default function StorefrontProductsPage() {
     [items],
   );
 
-  const fetchProducts = async (
+  const fetchStorefrontProducts = async (
     nextPage = page,
     nextKeyword = keyword,
     nextCategory = categoryFilter,
@@ -82,7 +85,7 @@ export default function StorefrontProductsPage() {
   ) => {
     setLoading(true);
     try {
-      const res = await productApi.list({
+      const res = await productApi.storefrontList({
         page: nextPage,
         size: PAGE_SIZE,
         keyword: nextKeyword || undefined,
@@ -106,29 +109,33 @@ export default function StorefrontProductsPage() {
   };
 
   useEffect(() => {
-    fetchProducts(1, '', undefined, 'newest');
-    Promise.allSettled([
-      productApi.categories(),
-      recommendApi.list(),
-      favoriteApi.list(),
-    ]).then(([categoryRes, recommendRes, favoriteRes]) => {
+    fetchStorefrontProducts(1, '', undefined, 'newest');
+
+    const tasks = isLoggedIn
+      ? [productApi.categories(), recommendApi.list(), favoriteApi.list()]
+      : [productApi.categories(), recommendApi.list()];
+
+    Promise.allSettled(tasks).then((results) => {
+      const [categoryRes, recommendRes, favoriteRes] = results;
       if (categoryRes.status === 'fulfilled' && categoryRes.value.success) {
         setCategories(categoryRes.value.data ?? []);
       }
       if (recommendRes.status === 'fulfilled' && recommendRes.value.success) {
         setRecommendations(recommendRes.value.data ?? []);
       }
-      if (favoriteRes.status === 'fulfilled' && favoriteRes.value.success) {
+      if (isLoggedIn && favoriteRes && favoriteRes.status === 'fulfilled' && favoriteRes.value.success) {
         setFavoriteIds((favoriteRes.value.data ?? []).map((item: StorefrontProduct) => item.id));
+      } else if (!isLoggedIn) {
+        setFavoriteIds([]);
       }
     });
-  }, []);
+  }, [isLoggedIn]);
 
   const handleSearch = () => {
     const nextKeyword = draftKeyword.trim();
     setPage(1);
     setKeyword(nextKeyword);
-    fetchProducts(1, nextKeyword, categoryFilter, sortBy);
+    fetchStorefrontProducts(1, nextKeyword, categoryFilter, sortBy);
   };
 
   const handleReset = () => {
@@ -137,27 +144,31 @@ export default function StorefrontProductsPage() {
     setCategoryFilter(undefined);
     setSortBy('newest');
     setPage(1);
-    fetchProducts(1, '', undefined, 'newest');
+    fetchStorefrontProducts(1, '', undefined, 'newest');
   };
 
   const handleCategoryChange = (value: string | undefined) => {
     setCategoryFilter(value);
     setPage(1);
-    fetchProducts(1, keyword, value, sortBy);
+    fetchStorefrontProducts(1, keyword, value, sortBy);
   };
 
   const handleSortChange = (value: string) => {
     setSortBy(value);
     setPage(1);
-    fetchProducts(1, keyword, categoryFilter, value);
+    fetchStorefrontProducts(1, keyword, categoryFilter, value);
   };
 
   const handlePageChange = (nextPage: number) => {
     setPage(nextPage);
-    fetchProducts(nextPage, keyword, categoryFilter, sortBy);
+    fetchStorefrontProducts(nextPage, keyword, categoryFilter, sortBy);
   };
 
   const handleAddToCart = async (productId: number) => {
+    if (!isLoggedIn) {
+      navigate('/login', { state: { from: currentRoute } });
+      return;
+    }
     setProcessingId(productId);
     try {
       await cartApi.add({ productId, quantity: 1 });
@@ -169,7 +180,43 @@ export default function StorefrontProductsPage() {
     }
   };
 
+  const handleBuyNow = async (productId: number) => {
+    if (!isLoggedIn) {
+      navigate('/login', { state: { from: currentRoute } });
+      return;
+    }
+    setProcessingId(productId);
+    try {
+      await cartApi.add({ productId, quantity: 1 });
+      const cartRes = await cartApi.list();
+      if (!cartRes.success) {
+        throw new Error('购物车读取失败');
+      }
+
+      const cartItems = cartRes.data ?? [];
+      const target = cartItems.find((item: { productId: number }) => item.productId === productId);
+      if (!target) {
+        throw new Error('未找到待结算商品');
+      }
+
+      await Promise.all(
+        cartItems.map((item: { id: number; productId: number; checked: number }) =>
+          cartApi.updateChecked(item.id, item.productId === productId ? 1 : 0),
+        ),
+      );
+      navigate('/store/checkout');
+    } catch {
+      message.error('立即购买失败');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const handleToggleFavorite = async (productId: number) => {
+    if (!isLoggedIn) {
+      navigate('/login', { state: { from: currentRoute } });
+      return;
+    }
     setProcessingId(productId);
     try {
       if (favoriteIdSet.has(productId)) {
@@ -186,6 +233,10 @@ export default function StorefrontProductsPage() {
     } finally {
       setProcessingId(null);
     }
+  };
+
+  const stopCardClick = (event: MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
   };
 
   return (
@@ -208,6 +259,18 @@ export default function StorefrontProductsPage() {
             <p className="mt-4 max-w-2xl text-sm md:text-base text-gray-700 leading-7">
               从商品搜索、限时折扣到收藏、加购、下单，这里把现有商品相关能力串成了完整前台入口。
             </p>
+
+            <div className="flex flex-wrap gap-3 mt-5">
+              <Button type="primary" onClick={() => navigate('/store/cart')}>
+                我的购物车
+              </Button>
+              <Button onClick={() => navigate('/store/favorites')}>
+                我的收藏
+              </Button>
+              <Button onClick={() => navigate('/store/orders')}>
+                我的订单
+              </Button>
+            </div>
 
             <div className="grid gap-3 sm:grid-cols-3 mt-6">
               <div className="border border-black bg-white/80 p-4">
@@ -297,7 +360,9 @@ export default function StorefrontProductsPage() {
                 <button
                   key={item.id}
                   className="text-left border border-white/30 p-4 hover:bg-white hover:text-black transition-colors duration-150"
-                  onClick={() => navigate(`/products/${item.id}`)}
+                  onClick={() => navigate(`/store/products/${item.id}`, {
+                    state: { from: currentRoute },
+                  })}
                 >
                   <div className="text-xs text-red-300 mb-1">{item.category || '推荐商品'}</div>
                   <div className="font-bold">{item.name}</div>
@@ -325,7 +390,9 @@ export default function StorefrontProductsPage() {
               <button
                 key={item.id}
                 className="border border-black p-4 text-left hover:bg-gray-50 transition-colors duration-150"
-                onClick={() => navigate(`/products/${item.id}`)}
+                onClick={() => navigate(`/store/products/${item.id}`, {
+                  state: { from: currentRoute },
+                })}
               >
                 <div className="flex items-center justify-between gap-2">
                   <Tag color={item.promoActive === 1 ? 'volcano' : 'default'}>
@@ -365,7 +432,7 @@ export default function StorefrontProductsPage() {
         <Spin spinning={loading}>
           {items.length > 0 ? (
             <>
-              <div className="grid gap-5 sm:grid-cols-2 2xl:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                 {items.map((item) => {
                   const busy = processingId === item.id;
                   const favorited = favoriteIdSet.has(item.id);
@@ -376,8 +443,24 @@ export default function StorefrontProductsPage() {
                       : item.originalPrice;
 
                   return (
-                    <div key={item.id} className="group border border-black overflow-hidden bg-white">
-                      <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
+                    <article
+                      key={item.id}
+                      className="group border border-black overflow-hidden bg-white cursor-pointer"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => navigate(`/store/products/${item.id}`, {
+                        state: { from: currentRoute },
+                      })}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          navigate(`/store/products/${item.id}`, {
+                            state: { from: currentRoute },
+                          });
+                        }
+                      }}
+                    >
+                      <div className="relative aspect-[5/4] bg-gray-100 overflow-hidden">
                         {item.imageUrl ? (
                           <img
                             src={item.imageUrl}
@@ -399,8 +482,8 @@ export default function StorefrontProductsPage() {
                         </div>
                       </div>
 
-                      <div className="p-5">
-                        <div className="flex items-center justify-between gap-3 mb-2">
+                      <div className="p-4">
+                        <div className="flex items-center justify-between gap-3 mb-1.5">
                           <div className="text-xs text-gray-500">
                             {item.brandName || '品牌待补充'}
                           </div>
@@ -409,17 +492,17 @@ export default function StorefrontProductsPage() {
                           </div>
                         </div>
 
-                        <h3 className="text-lg font-bold text-black line-clamp-2 min-h-[56px]">
+                        <h3 className="text-base font-bold text-black line-clamp-2 min-h-[44px]">
                           {item.name}
                         </h3>
 
-                        <p className="mt-2 text-sm text-gray-600 line-clamp-2 min-h-[44px]">
+                        <p className="mt-1.5 text-xs text-gray-600 line-clamp-1">
                           {item.description || '暂无商品描述，点击详情查看完整信息。'}
                         </p>
 
-                        <div className="mt-4 flex items-end justify-between gap-4">
+                        <div className="mt-3 flex items-end justify-between gap-3">
                           <div>
-                            <div className="text-2xl font-bold text-red-600">
+                            <div className="text-xl font-bold text-red-600">
                               ¥{item.price?.toFixed(2)}
                             </div>
                             {priceToStrike && priceToStrike > item.price && (
@@ -436,31 +519,39 @@ export default function StorefrontProductsPage() {
 
                         <div className="grid grid-cols-3 gap-2 mt-5">
                           <Button
-                            icon={<EyeOutlined />}
-                            onClick={() => navigate(`/products/${item.id}`)}
-                          >
-                            详情
-                          </Button>
-                          <Button
                             type="primary"
-                            icon={<ShoppingCartOutlined />}
+                            onClick={(event) => {
+                              stopCardClick(event);
+                              handleBuyNow(item.id);
+                            }}
                             loading={busy}
                             disabled={!available}
-                            onClick={() => handleAddToCart(item.id)}
                           >
-                            加购
+                            购买
+                          </Button>
+                          <Button
+                            icon={<ShoppingCartOutlined />}
+                            disabled={!available}
+                            onClick={(event) => {
+                              stopCardClick(event);
+                              handleAddToCart(item.id);
+                            }}
+                          >
+                            购物车
                           </Button>
                           <Button
                             icon={favorited ? <HeartFilled /> : <HeartOutlined />}
                             danger={favorited}
-                            loading={busy}
-                            onClick={() => handleToggleFavorite(item.id)}
+                            onClick={(event) => {
+                              stopCardClick(event);
+                              handleToggleFavorite(item.id);
+                            }}
                           >
                             {favorited ? '已藏' : '收藏'}
                           </Button>
                         </div>
                       </div>
-                    </div>
+                    </article>
                   );
                 })}
               </div>

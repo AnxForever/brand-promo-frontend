@@ -22,10 +22,58 @@ function lazily(factory: () => Promise<{ default: React.ComponentType }>) {
 
 function HomeRedirect() {
   const role = useAuthStore((state) => state.user?.role);
-  return <Navigate to={role === 'ADMIN' ? '/dashboard' : '/products'} replace />;
+  return <Navigate to={role === 'ADMIN' ? '/dashboard' : '/store'} replace />;
 }
 
 const router = createBrowserRouter([
+  {
+    path: '/store',
+    element: lazily(() => import('../pages/Products/Storefront')),
+  },
+  {
+    path: '/store/products/:id',
+    element: lazily(() => import('../pages/ProductDetail')),
+  },
+  {
+    path: '/store/cart',
+    element: (
+      <AuthGuard>
+        {lazily(() => import('../pages/Cart'))}
+      </AuthGuard>
+    ),
+  },
+  {
+    path: '/store/favorites',
+    element: (
+      <AuthGuard>
+        {lazily(() => import('../pages/Favorites'))}
+      </AuthGuard>
+    ),
+  },
+  {
+    path: '/store/checkout',
+    element: (
+      <AuthGuard>
+        {lazily(() => import('../pages/Checkout'))}
+      </AuthGuard>
+    ),
+  },
+  {
+    path: '/store/orders',
+    element: (
+      <AuthGuard>
+        {lazily(() => import('../pages/Orders'))}
+      </AuthGuard>
+    ),
+  },
+  {
+    path: '/store/orders/:id',
+    element: (
+      <AuthGuard>
+        {lazily(() => import('../pages/OrderDetail'))}
+      </AuthGuard>
+    ),
+  },
   {
     path: '/login',
     element: lazily(() => import('../pages/Login')),

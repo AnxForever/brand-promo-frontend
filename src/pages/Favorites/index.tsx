@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { App, Button, Empty, Spin, Tag } from 'antd';
 import {
   DeleteOutlined,
@@ -13,6 +13,8 @@ interface FavoriteProduct {
   id: number;
   name: string;
   price: number;
+  basePrice?: number;
+  promoActive?: number;
   category?: string;
   brandName?: string;
   status: number;
@@ -25,7 +27,9 @@ export default function FavoritesPage() {
   const [loading, setLoading] = useState(false);
   const [processingId, setProcessingId] = useState<number | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { message } = App.useApp();
+  const currentRoute = `${location.pathname}${location.search}`;
 
   const fetchData = async () => {
     setLoading(true);
@@ -122,19 +126,29 @@ export default function FavoritesPage() {
                         <div className="text-2xl font-bold text-red-600">
                           ¥{item.price?.toFixed(2)}
                         </div>
+                        {item.promoActive === 1 && item.basePrice && item.basePrice > item.price && (
+                          <div className="text-xs text-gray-500 line-through mt-1">
+                            ¥{item.basePrice.toFixed(2)}
+                          </div>
+                        )}
                         {item.stock !== undefined && (
                           <div className="text-xs text-gray-500 mt-1">
                             库存 {item.stock}
                           </div>
                         )}
                       </div>
-                      <HeartFilled className="text-red-500 text-lg" />
+                      <div className="flex flex-col items-end gap-1">
+                        <HeartFilled className="text-red-500 text-lg" />
+                        {item.promoActive === 1 && <Tag color="volcano">活动中</Tag>}
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-3 gap-2 mt-5">
                       <Button
                         icon={<EyeOutlined />}
-                        onClick={() => navigate(`/products/${item.id}`)}
+                        onClick={() => navigate(`/store/products/${item.id}`, {
+                          state: { from: currentRoute },
+                        })}
                       >
                         查看
                       </Button>
@@ -167,7 +181,7 @@ export default function FavoritesPage() {
               description="你还没有收藏商品"
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             >
-              <Button type="primary" onClick={() => navigate('/products')}>
+              <Button type="primary" onClick={() => navigate('/store')}>
                 去逛商品
               </Button>
             </Empty>

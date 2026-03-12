@@ -26,6 +26,7 @@ export const authApi = {
 
 export const productApi = {
   list: (params?: Record<string, any>) => request.get<any, any>('/products', { params }),
+  storefrontList: (params?: Record<string, any>) => request.get<any, any>('/products/storefront', { params }),
   detail: (id: number) => request.get<any, any>(`/products/${id}`),
   create: (data: any) => request.post<any, any>('/products', data),
   update: (id: number, data: any) => request.put<any, any>(`/products/${id}`, data),
@@ -39,6 +40,7 @@ export const adApi = {
   detail: (id: number) => request.get<any, any>(`/ads/${id}`),
   create: (data: any) => request.post<any, any>('/ads', data),
   update: (id: number, data: any) => request.put<any, any>(`/ads/${id}`, data),
+  delete: (id: number) => request.delete<any, any>(`/ads/${id}`),
   updateStatus: (id: number, status: number) =>
     request.put<any, any>(`/ads/${id}/status`, null, { params: { status } }),
 };

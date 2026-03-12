@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Table, Button, Tag, Space, Select, App } from 'antd';
 import { EyeOutlined, FilterOutlined } from '@ant-design/icons';
 import { orderApi, ORDER_STATUS_MAP } from '../../api';
+import { useAuthStore } from '../../store/authStore';
 
 const statusConfig: Record<string, { text: string; color: string }> = {
   PENDING: { text: '待支付', color: 'warning' },
@@ -44,7 +45,12 @@ export default function OrdersPage() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const navigate = useNavigate();
+  const location = useLocation();
   const { message } = App.useApp();
+  const user = useAuthStore((state) => state.user);
+  const isManager = user?.role === 'ADMIN' || user?.role === 'MERCHANT';
+  const isStorefrontRoute = location.pathname.startsWith('/store');
+  const detailBasePath = isStorefrontRoute ? '/store/orders' : '/orders';
 
   const fetchData = async (p = page, status = statusFilter) => {
     setLoading(true);
@@ -171,11 +177,13 @@ export default function OrdersPage() {
           <Button
             size="small"
             icon={<EyeOutlined />}
-            onClick={() => navigate(`/orders/${record.id}`)}
+            onClick={() => navigate(`${detailBasePath}/${record.id}`, {
+              state: { from: `${location.pathname}${location.search}` },
+            })}
           >
             详情
           </Button>
-          {record.status === 'PENDING' && (
+          {!isManager && record.status === 'PENDING' && (
             <>
               <Button
                 size="small"
@@ -193,12 +201,12 @@ export default function OrdersPage() {
               </Button>
             </>
           )}
-          {record.status === 'PAID' && (
+          {isManager && record.status === 'PAID' && (
             <Button size="small" onClick={() => handleShip(record.id)}>
               发货
             </Button>
           )}
-          {record.status === 'SHIPPED' && (
+          {!isManager && record.status === 'SHIPPED' && (
             <Button size="small" onClick={() => handleComplete(record.id)}>
               确认收货
             </Button>
@@ -211,7 +219,7 @@ export default function OrdersPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold tracking-tight text-black mb-6">
-        订单管理
+        {isStorefrontRoute ? '我的订单' : isManager ? '订单管理' : '我的订单'}
       </h1>
 
       <div className="bg-white border border-black p-6">

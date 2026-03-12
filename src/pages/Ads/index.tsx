@@ -6,6 +6,7 @@ import {
   Modal,
   Form,
   Input,
+  Popconfirm,
   Select,
   DatePicker,
   Tag,
@@ -60,9 +61,23 @@ export default function AdsPage() {
   };
 
   const handleStatusChange = async (id: number, status: number) => {
-    await adApi.updateStatus(id, status);
-    message.success('状态已更新');
-    fetchData();
+    try {
+      await adApi.updateStatus(id, status);
+      message.success('状态已更新');
+      fetchData();
+    } catch (err: any) {
+      message.error(err?.message || '状态更新失败');
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await adApi.delete(id);
+      message.success('删除成功');
+      fetchData();
+    } catch (err: any) {
+      message.error(err?.message || '删除失败');
+    }
   };
 
   const handleSubmit = async () => {
@@ -157,6 +172,14 @@ export default function AdsPage() {
               下线
             </Button>
           )}
+          <Popconfirm
+            title="确认删除该广告？"
+            onConfirm={() => handleDelete(record.id)}
+          >
+            <Button size="small" danger ghost>
+              删除
+            </Button>
+          </Popconfirm>
         </Space>
       ),
     },

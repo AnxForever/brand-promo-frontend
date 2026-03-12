@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
   Button,
   Tag,
@@ -11,6 +11,7 @@ import {
 } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { orderApi, ORDER_STATUS_MAP } from '../../api';
+import { useAuthStore } from '../../store/authStore';
 
 const statusConfig: Record<string, { text: string; color: string; step: number }> = {
   PENDING: { text: '待支付', color: 'warning', step: 0 },
@@ -48,6 +49,10 @@ interface OrderDetail {
   items: OrderItem[];
 }
 
+interface OrderDetailLocationState {
+  from?: string;
+}
+
 function mapOrderDetail(res: any): OrderDetail {
   const o = res.order ?? res;
   const items: OrderItem[] = res.items ?? o.items ?? [];
@@ -76,7 +81,14 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { message } = App.useApp();
+  const user = useAuthStore((state) => state.user);
+  const isManager = user?.role === 'ADMIN' || user?.role === 'MERCHANT';
+  const isStorefrontRoute = location.pathname.startsWith('/store');
+  const locationState = location.state as OrderDetailLocationState | null;
+  const fallbackReturnPath = isStorefrontRoute ? '/store/orders' : '/orders';
+  const returnPath = locationState?.from?.startsWith('/') ? locationState.from : fallbackReturnPath;
 
   const fetchOrder = async () => {
     if (!id) return;
@@ -155,7 +167,7 @@ export default function OrderDetailPage() {
         <Button
           type="text"
           icon={<ArrowLeftOutlined />}
-          onClick={() => navigate('/orders')}
+          onClick={() => navigate(returnPath)}
         />
         <h1 className="text-2xl font-bold tracking-tight text-black">
           订单详情
@@ -312,7 +324,7 @@ export default function OrderDetailPage() {
                   </div>
 
                   <div className="space-y-2">
-                    {order.status === 'PENDING' && (
+                    {!isManager && order.status === 'PENDING' && (
                       <>
                         <Button
                           type="primary"
@@ -326,12 +338,12 @@ export default function OrderDetailPage() {
                         </Button>
                       </>
                     )}
-                    {order.status === 'PAID' && (
+                    {isManager && order.status === 'PAID' && (
                       <Button type="primary" block onClick={handleShip}>
                         标记发货
                       </Button>
                     )}
-                    {order.status === 'SHIPPED' && (
+                    {!isManager && order.status === 'SHIPPED' && (
                       <Button type="primary" block onClick={handleComplete}>
                         确认收货
                       </Button>

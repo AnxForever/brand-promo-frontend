@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Button,
   Form,
@@ -9,6 +9,7 @@ import {
   Empty,
   Divider,
   App,
+  Tag,
 } from 'antd';
 import { ShoppingCartOutlined } from '@ant-design/icons';
 import { cartApi, orderApi, couponApi } from '../../api';
@@ -19,6 +20,8 @@ interface CartItem {
   productName: string;
   imageUrl?: string;
   price: number;
+  basePrice?: number;
+  promoActive?: number;
   quantity: number;
   checked: number;
 }
@@ -38,7 +41,10 @@ export default function CheckoutPage() {
   const [selectedCouponId, setSelectedCouponId] = useState<number | undefined>();
   const [form] = Form.useForm();
   const navigate = useNavigate();
+  const location = useLocation();
   const { message } = App.useApp();
+  const isStorefrontRoute = location.pathname.startsWith('/store');
+  const orderListPath = isStorefrontRoute ? '/store/orders' : '/orders';
 
   useEffect(() => {
     const loadData = async () => {
@@ -88,7 +94,9 @@ export default function CheckoutPage() {
       });
       if (res.success) {
         message.success('订单创建成功');
-        navigate(`/orders/${res.data?.id ?? res.data}`);
+        navigate(`${orderListPath}/${res.data?.id ?? res.data}`, {
+          state: { from: orderListPath },
+        });
       }
     } catch {
       message.error('创建订单失败');
@@ -112,7 +120,7 @@ export default function CheckoutPage() {
                 <span className="text-gray-500">购物车为空，无法结算</span>
               }
             >
-              <Button type="primary" onClick={() => navigate('/cart')}>
+              <Button type="primary" onClick={() => navigate(isStorefrontRoute ? '/store/cart' : '/cart')}>
                 返回购物车
               </Button>
             </Empty>
@@ -147,13 +155,23 @@ export default function CheckoutPage() {
                         <span className="text-sm text-black truncate block">
                           {item.productName}
                         </span>
+                        {item.promoActive === 1 && (
+                          <Tag color="volcano" className="mt-1">限时折扣</Tag>
+                        )}
                       </div>
                       <span className="text-xs text-gray-500 shrink-0">
                         x{item.quantity}
                       </span>
-                      <span className="text-sm font-bold text-black w-20 text-right shrink-0">
-                        ¥{(item.price * item.quantity).toFixed(2)}
-                      </span>
+                      <div className="w-24 text-right shrink-0">
+                        <div className="text-sm font-bold text-black">
+                          ¥{(item.price * item.quantity).toFixed(2)}
+                        </div>
+                        {item.promoActive === 1 && item.basePrice && item.basePrice > item.price && (
+                          <div className="text-xs text-gray-500 line-through">
+                            ¥{(item.basePrice * item.quantity).toFixed(2)}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -277,7 +295,7 @@ export default function CheckoutPage() {
                 <Button
                   block
                   className="mt-2"
-                  onClick={() => navigate('/cart')}
+                  onClick={() => navigate(isStorefrontRoute ? '/store/cart' : '/cart')}
                 >
                   返回购物车
                 </Button>

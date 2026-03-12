@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Button,
   Checkbox,
@@ -8,6 +8,7 @@ import {
   Spin,
   Empty,
   App,
+  Tag,
 } from 'antd';
 import {
   DeleteOutlined,
@@ -22,6 +23,9 @@ interface CartItem {
   productName: string;
   imageUrl?: string;
   price: number;
+  basePrice?: number;
+  originalPrice?: number;
+  promoActive?: number;
   quantity: number;
   checked: number;
 }
@@ -30,7 +34,9 @@ export default function CartPage() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { message } = App.useApp();
+  const isStorefrontRoute = location.pathname.startsWith('/store');
 
   const fetchCart = async () => {
     setLoading(true);
@@ -145,7 +151,7 @@ export default function CartPage() {
                 <span className="text-gray-500">购物车是空的，快去挑选商品吧</span>
               }
             >
-              <Button type="primary" onClick={() => navigate('/products')}>
+              <Button type="primary" onClick={() => navigate('/store')}>
                 去逛逛
               </Button>
             </Empty>
@@ -191,9 +197,19 @@ export default function CartPage() {
                     <h3 className="text-sm font-bold text-black truncate">
                       {item.productName}
                     </h3>
-                    <p className="text-sm text-red-600 font-bold mt-1">
-                      ¥{item.price.toFixed(2)}
-                    </p>
+                    <div className="mt-1">
+                      <p className="text-sm text-red-600 font-bold">
+                        ¥{item.price.toFixed(2)}
+                      </p>
+                      {item.promoActive === 1 && item.basePrice && item.basePrice > item.price && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500 line-through">
+                            ¥{item.basePrice.toFixed(2)}
+                          </span>
+                          <Tag color="volcano">活动价</Tag>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
@@ -249,7 +265,7 @@ export default function CartPage() {
                     size="large"
                     className="font-bold px-8"
                     disabled={checkedItems.length === 0}
-                    onClick={() => navigate('/checkout')}
+                    onClick={() => navigate(isStorefrontRoute ? '/store/checkout' : '/checkout')}
                   >
                     去结算（{checkedItems.length}）
                   </Button>

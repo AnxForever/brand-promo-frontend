@@ -20,6 +20,9 @@ export default function AuthGuard({ children, roles }: Props) {
   }
 
   if (!isLoggedIn) {
+    if (location.pathname === '/') {
+      return <Navigate to="/store" replace />;
+    }
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

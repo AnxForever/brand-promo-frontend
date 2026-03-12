@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
   Button,
   InputNumber,
@@ -22,6 +22,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import { browseHistoryApi, cartApi, favoriteApi, productApi, reviewApi } from '../../api';
+import { useAuthStore } from '../../store/authStore';
 
 interface Product {
   id: number;
@@ -29,6 +30,12 @@ interface Product {
   description?: string;
   price: number;
   originalPrice?: number;
+  basePrice?: number;
+  promoPrice?: number;
+  promoStartTime?: string;
+  promoEndTime?: string;
+  promoStatus?: number;
+  promoActive?: number;
   category?: string;
   brandId?: number;
   brandName?: string;
@@ -67,6 +74,16 @@ function parseSpecs(product: Product): Record<string, string> {
   return {};
 }
 
+function formatDateTime(value?: string): string {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return String(date.getMonth() + 1).padStart(2, '0') + '/'
+    + String(date.getDate()).padStart(2, '0') + ' '
+    + String(date.getHours()).padStart(2, '0') + ':'
+    + String(date.getMinutes()).padStart(2, '0');
+}
+
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
@@ -80,18 +97,35 @@ export default function ProductDetailPage() {
   const [currentImage, setCurrentImage] = useState(0);
   const [reviewForm] = Form.useForm();
   const navigate = useNavigate();
+  const location = useLocation();
   const { message } = App.useApp();
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const isStorefrontRoute = location.pathname.startsWith('/store');
+  const currentRoute = `${location.pathname}${location.search}`;
+  const productDetailLocationState = location.state as { from?: string } | null;
+  const fallbackReturnPath = isStorefrontRoute ? '/store' : '/products';
+  const returnPath =
+    productDetailLocationState?.from?.startsWith('/')
+      ? productDetailLocationState.from
+      : fallbackReturnPath;
 
   useEffect(() => {
     if (!id) return;
     const loadData = async () => {
       setLoading(true);
       try {
-        const [prodRes, reviewRes, favoriteRes] = await Promise.allSettled([
-          productApi.detail(Number(id)),
-          reviewApi.listByProduct(Number(id)),
-          favoriteApi.check(Number(id)),
-        ]);
+        const tasks = isLoggedIn
+          ? [
+              productApi.detail(Number(id)),
+              reviewApi.listByProduct(Number(id)),
+              favoriteApi.check(Number(id)),
+            ]
+          : [
+              productApi.detail(Number(id)),
+              reviewApi.listByProduct(Number(id)),
+            ];
+        const results = await Promise.allSettled(tasks);
+        const [prodRes, reviewRes, favoriteRes] = results;
         if (prodRes.status === 'fulfilled' && prodRes.value.success) {
           setProduct(prodRes.value.data);
         }
@@ -99,21 +133,27 @@ export default function ProductDetailPage() {
           const list = reviewRes.value.data?.list ?? reviewRes.value.data ?? [];
           setReviews(list);
         }
-        if (favoriteRes.status === 'fulfilled' && favoriteRes.value.success) {
+        if (isLoggedIn && favoriteRes && favoriteRes.status === 'fulfilled' && favoriteRes.value.success) {
           setFavorited(!!favoriteRes.value.data?.favorited);
         } else {
           setFavorited(false);
         }
-        browseHistoryApi.record(Number(id)).catch(() => {});
+        if (isLoggedIn) {
+          browseHistoryApi.record(Number(id)).catch(() => {});
+        }
       } finally {
         setLoading(false);
       }
     };
     loadData();
-  }, [id]);
+  }, [id, isLoggedIn]);
 
   const handleAddToCart = async () => {
     if (!product) return;
+    if (!isLoggedIn) {
+      navigate('/login', { state: { from: currentRoute } });
+      return;
+    }
     setAddingCart(true);
     try {
       await cartApi.add({ productId: product.id, quantity });
@@ -125,8 +165,43 @@ export default function ProductDetailPage() {
     }
   };
 
+  const handleBuyNow = async () => {
+    if (!product) return;
+    if (!isLoggedIn) {
+      navigate('/login', { state: { from: currentRoute } });
+      return;
+    }
+    setAddingCart(true);
+    try {
+      await cartApi.add({ productId: product.id, quantity });
+      const cartRes = await cartApi.list();
+      if (!cartRes.success) {
+        throw new Error('购物车读取失败');
+      }
+      const cartItems = cartRes.data ?? [];
+      const target = cartItems.find((item: { productId: number }) => item.productId === product.id);
+      if (!target) {
+        throw new Error('未找到待结算商品');
+      }
+      await Promise.all(
+        cartItems.map((item: { id: number; productId: number }) =>
+          cartApi.updateChecked(item.id, item.productId === product.id ? 1 : 0),
+        ),
+      );
+      navigate(isStorefrontRoute ? '/store/checkout' : '/checkout');
+    } catch {
+      message.error('立即购买失败');
+    } finally {
+      setAddingCart(false);
+    }
+  };
+
   const handleToggleFavorite = async () => {
     if (!product) return;
+    if (!isLoggedIn) {
+      navigate('/login', { state: { from: currentRoute } });
+      return;
+    }
     setFavoriting(true);
     try {
       if (favorited) {
@@ -147,6 +222,10 @@ export default function ProductDetailPage() {
 
   const handleSubmitReview = async () => {
     if (!id) return;
+    if (!isLoggedIn) {
+      navigate('/login', { state: { from: currentRoute } });
+      return;
+    }
     const values = await reviewForm.validateFields();
     try {
       await reviewApi.create(Number(id), {
@@ -176,6 +255,7 @@ export default function ProductDetailPage() {
 
   const images = product ? parseImages(product) : [];
   const specs = product ? parseSpecs(product) : {};
+  const displayOriginalPrice = product?.promoActive === 1 ? product.basePrice : product?.originalPrice;
 
   return (
     <div>
@@ -183,7 +263,7 @@ export default function ProductDetailPage() {
         <Button
           type="text"
           icon={<ArrowLeftOutlined />}
-          onClick={() => navigate('/products')}
+          onClick={() => navigate(returnPath)}
         />
         <h1 className="text-2xl font-bold tracking-tight text-black">
           商品详情
@@ -245,6 +325,9 @@ export default function ProductDetailPage() {
                     {product.brandName && (
                       <Tag color="red">{product.brandName}</Tag>
                     )}
+                    {product.promoActive === 1 && (
+                      <Tag color="volcano">限时折扣</Tag>
+                    )}
                     <Tag color={product.status === 1 ? 'success' : 'error'}>
                       {product.status === 1 ? '在售' : '已下架'}
                     </Tag>
@@ -254,9 +337,9 @@ export default function ProductDetailPage() {
                     <span className="text-3xl font-bold text-red-600">
                       ¥{product.price?.toFixed(2)}
                     </span>
-                    {product.originalPrice && product.originalPrice > product.price && (
+                    {displayOriginalPrice && displayOriginalPrice > product.price && (
                       <span className="text-sm text-gray-500 line-through ml-2">
-                        ¥{product.originalPrice.toFixed(2)}
+                        ¥{displayOriginalPrice.toFixed(2)}
                       </span>
                     )}
                     {product.stock !== undefined && (
@@ -265,6 +348,15 @@ export default function ProductDetailPage() {
                       </span>
                     )}
                   </div>
+
+                  {product.promoStatus === 1 && product.promoStartTime && product.promoEndTime && (
+                    <div className="mt-4 p-3 border border-red-200 bg-red-50 text-sm">
+                      <div className="font-bold text-red-600">限时折扣活动</div>
+                      <div className="text-gray-600 mt-1">
+                        活动时间：{formatDateTime(product.promoStartTime)} - {formatDateTime(product.promoEndTime)}
+                      </div>
+                    </div>
+                  )}
 
                   {product.description && (
                     <p className="text-sm text-gray-600 mt-4 leading-relaxed">
@@ -324,6 +416,16 @@ export default function ProductDetailPage() {
                       >
                         加入购物车
                       </Button>
+                      <Button
+                        size="large"
+                        type="primary"
+                        ghost
+                        className="font-bold w-full md:w-auto px-10"
+                        loading={addingCart}
+                        onClick={handleBuyNow}
+                      >
+                        立即购买
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -336,7 +438,7 @@ export default function ProductDetailPage() {
                 <h2 className="text-base font-bold text-black">
                   用户评价（{reviews.length}）
                 </h2>
-                <Button onClick={() => setReviewModalOpen(true)}>
+                <Button onClick={() => (isLoggedIn ? setReviewModalOpen(true) : navigate('/login', { state: { from: currentRoute } }))}>
                   写评价
                 </Button>
               </div>

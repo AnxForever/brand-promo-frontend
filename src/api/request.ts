@@ -22,7 +22,8 @@ request.interceptors.response.use(
   (response) => response.data,
   (error) => {
     const status = error.response?.status;
-    if (status === 401) {
+    const token = localStorage.getItem('token');
+    if (status === 401 && token) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';

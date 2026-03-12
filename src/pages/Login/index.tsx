@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Form, Input, Button, App } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { authApi } from '../../api';
@@ -8,6 +8,7 @@ import { useAuthStore } from '../../store/authStore';
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const login = useAuthStore((s) => s.login);
   const { message } = App.useApp();
 
@@ -18,7 +19,12 @@ export default function LoginPage() {
       if (res.success) {
         login(res.data);
         message.success('登录成功');
-        navigate('/dashboard');
+        const from = (location.state as { from?: string })?.from;
+        if (from) {
+          navigate(from, { replace: true });
+        } else {
+          navigate(res.data.role === 'ADMIN' ? '/dashboard' : '/store', { replace: true });
+        }
       } else {
         message.error(res.message || '登录失败');
       }
