@@ -11,7 +11,6 @@ import {
   Tag,
 } from 'antd';
 import {
-  FireOutlined,
   HeartFilled,
   HeartOutlined,
   ReloadOutlined,
@@ -250,7 +249,7 @@ export default function StorefrontProductsPage() {
             backgroundSize: 'auto, 28px 28px, 28px 28px',
           }}
         />
-        <div className="relative grid gap-8 lg:grid-cols-[1.45fr_0.95fr] p-6 md:p-8">
+        <div className="relative p-6 md:p-8">
           <div>
             <Tag color="red" className="mb-4">Storefront</Tag>
             <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-black leading-none">
@@ -339,37 +338,6 @@ export default function StorefrontProductsPage() {
                 ))}
               </div>
             )}
-          </div>
-
-          <div className="border border-black bg-black text-white p-6 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-red-300">
-                <FireOutlined />
-                Today Picks
-              </div>
-              <h2 className="mt-3 text-2xl font-bold leading-tight">
-                推荐商品和高转化入口已经接到前台。
-              </h2>
-              <p className="mt-3 text-sm text-gray-300 leading-7">
-                用户现在可以从商品页直接完成浏览、收藏、加购和跳转详情，不再只能看到后台管理表格。
-              </p>
-            </div>
-
-            <div className="grid gap-3 mt-6">
-              {recommendations.slice(0, 3).map((item) => (
-                <button
-                  key={item.id}
-                  className="text-left border border-white/30 p-4 hover:bg-white hover:text-black transition-colors duration-150"
-                  onClick={() => navigate(`/store/products/${item.id}`, {
-                    state: { from: currentRoute },
-                  })}
-                >
-                  <div className="text-xs text-red-300 mb-1">{item.category || '推荐商品'}</div>
-                  <div className="font-bold">{item.name}</div>
-                  <div className="mt-2 text-sm">¥{item.price?.toFixed(2)}</div>
-                </button>
-              ))}
-            </div>
           </div>
         </div>
       </section>
