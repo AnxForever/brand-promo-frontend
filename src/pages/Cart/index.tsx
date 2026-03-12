@@ -11,6 +11,7 @@ import {
   Tag,
 } from 'antd';
 import {
+  ArrowLeftOutlined,
   DeleteOutlined,
   ShoppingCartOutlined,
   ClearOutlined,
@@ -126,9 +127,18 @@ export default function CartPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-black">
-          购物车
-        </h1>
+        <div className="flex items-center gap-3">
+          {isStorefrontRoute && (
+            <Button
+              type="text"
+              icon={<ArrowLeftOutlined />}
+              onClick={() => navigate('/store')}
+            />
+          )}
+          <h1 className="text-2xl font-bold tracking-tight text-black">
+            购物车
+          </h1>
+        </div>
         {items.length > 0 && (
           <Popconfirm
             title="确认清空购物车？"

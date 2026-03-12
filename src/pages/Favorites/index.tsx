@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { App, Button, Empty, Spin, Tag } from 'antd';
 import {
+  ArrowLeftOutlined,
   DeleteOutlined,
   EyeOutlined,
   HeartFilled,
@@ -75,15 +76,31 @@ export default function FavoritesPage() {
     }
   };
 
+  const isStorefrontRoute = location.pathname.startsWith('/store');
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-black">
-          我的收藏
-        </h1>
-        <span className="text-sm text-gray-500">
-          共 {items.length} 件商品
-        </span>
+        <div className="flex items-center gap-3">
+          {isStorefrontRoute && (
+            <Button
+              type="text"
+              icon={<ArrowLeftOutlined />}
+              onClick={() => navigate('/store')}
+            />
+          )}
+          <h1 className="text-2xl font-bold tracking-tight text-black">
+            我的收藏
+          </h1>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-500">
+            共 {items.length} 件商品
+          </span>
+          {isStorefrontRoute && (
+            <Button onClick={() => navigate('/store')}>继续逛逛</Button>
+          )}
+        </div>
       </div>
 
       <Spin spinning={loading}>

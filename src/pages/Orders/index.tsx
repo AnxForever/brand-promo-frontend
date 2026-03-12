@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Table, Button, Tag, Space, Select, App } from 'antd';
-import { EyeOutlined, FilterOutlined } from '@ant-design/icons';
+import { Table, Button, Tag, Space, Select, Spin, Empty, Pagination, App } from 'antd';
+import {
+  ArrowLeftOutlined,
+  EyeOutlined,
+  FilterOutlined,
+  ShoppingOutlined,
+} from '@ant-design/icons';
 import { orderApi, ORDER_STATUS_MAP } from '../../api';
 import { useAuthStore } from '../../store/authStore';
 
@@ -51,6 +56,7 @@ export default function OrdersPage() {
   const isManager = user?.role === 'ADMIN' || user?.role === 'MERCHANT';
   const isStorefrontRoute = location.pathname.startsWith('/store');
   const detailBasePath = isStorefrontRoute ? '/store/orders' : '/orders';
+  const fromPath = `${location.pathname}${location.search}`;
 
   const fetchData = async (p = page, status = statusFilter) => {
     setLoading(true);
@@ -114,6 +120,174 @@ export default function OrdersPage() {
     }
   };
 
+  const handleStatusChange = (val: string) => {
+    setStatusFilter(val);
+    setPage(1);
+    fetchData(1, val);
+  };
+
+  const handlePageChange = (p: number) => {
+    setPage(p);
+    fetchData(p);
+  };
+
+  /* ──────────────────────────────────────────
+   *  Storefront card layout
+   * ────────────────────────────────────────── */
+  if (isStorefrontRoute) {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Button
+              type="text"
+              icon={<ArrowLeftOutlined />}
+              onClick={() => navigate('/store')}
+            />
+            <h1 className="text-2xl font-bold tracking-tight text-black">
+              我的订单
+            </h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-500">共 {total} 笔</span>
+            <Button onClick={() => navigate('/store')}>继续逛逛</Button>
+          </div>
+        </div>
+
+        {/* Filter tabs */}
+        <div className="flex flex-wrap gap-2 mb-5">
+          {statusFilterOptions.map((opt) => (
+            <Button
+              key={opt.value}
+              size="small"
+              type={statusFilter === opt.value ? 'primary' : 'default'}
+              onClick={() => handleStatusChange(opt.value)}
+            >
+              {opt.label}
+            </Button>
+          ))}
+        </div>
+
+        <Spin spinning={loading}>
+          {data.length > 0 ? (
+            <div className="space-y-4">
+              {data.map((record) => {
+                const cfg = statusConfig[record.status] ?? { text: record.status, color: 'default' };
+                return (
+                  <div
+                    key={record.id}
+                    className="bg-white border border-black overflow-hidden"
+                  >
+                    {/* Card header */}
+                    <div className="flex items-center justify-between gap-4 px-5 py-3 bg-gray-50 border-b border-gray-200">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="font-mono text-xs text-gray-500 truncate">
+                          {record.orderNo ?? `#${record.id}`}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {record.createdAt
+                            ? new Date(record.createdAt).toLocaleDateString()
+                            : ''}
+                        </span>
+                      </div>
+                      <Tag color={cfg.color}>{cfg.text}</Tag>
+                    </div>
+
+                    {/* Card body */}
+                    <div className="p-5">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <div className="text-sm text-gray-600">
+                            收货人：{record.receiverName}
+                          </div>
+                          {record.items.length > 0 && (
+                            <div className="text-xs text-gray-400 mt-1 truncate">
+                              {record.items.map((i: any) => i.productName).join('、')}
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="text-xl font-bold text-red-600">
+                            ¥{record.totalAmount?.toFixed(2) ?? '0.00'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card actions */}
+                    <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-gray-200">
+                      <Button
+                        size="small"
+                        icon={<EyeOutlined />}
+                        onClick={() => navigate(`${detailBasePath}/${record.id}`, {
+                          state: { from: fromPath },
+                        })}
+                      >
+                        查看详情
+                      </Button>
+                      {record.status === 'PENDING' && (
+                        <>
+                          <Button
+                            size="small"
+                            type="primary"
+                            onClick={() => handlePay(record.id)}
+                          >
+                            去支付
+                          </Button>
+                          <Button
+                            size="small"
+                            danger
+                            onClick={() => handleCancel(record.id)}
+                          >
+                            取消订单
+                          </Button>
+                        </>
+                      )}
+                      {record.status === 'SHIPPED' && (
+                        <Button
+                          size="small"
+                          type="primary"
+                          onClick={() => handleComplete(record.id)}
+                        >
+                          确认收货
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              <div className="flex justify-center mt-6">
+                <Pagination
+                  current={page}
+                  total={total}
+                  pageSize={10}
+                  showSizeChanger={false}
+                  onChange={handlePageChange}
+                  showTotal={(t) => `共 ${t} 条`}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white border border-black p-12">
+              <Empty
+                image={<ShoppingOutlined className="text-6xl text-gray-400" />}
+                description="暂无订单"
+              >
+                <Button type="primary" onClick={() => navigate('/store')}>
+                  去逛商品
+                </Button>
+              </Empty>
+            </div>
+          )}
+        </Spin>
+      </div>
+    );
+  }
+
+  /* ──────────────────────────────────────────
+   *  Backend table layout (admin / merchant)
+   * ────────────────────────────────────────── */
   const columns = [
     {
       title: '订单号',
@@ -178,7 +352,7 @@ export default function OrdersPage() {
             size="small"
             icon={<EyeOutlined />}
             onClick={() => navigate(`${detailBasePath}/${record.id}`, {
-              state: { from: `${location.pathname}${location.search}` },
+              state: { from: fromPath },
             })}
           >
             详情
@@ -219,7 +393,7 @@ export default function OrdersPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold tracking-tight text-black mb-6">
-        {isStorefrontRoute ? '我的订单' : isManager ? '订单管理' : '我的订单'}
+        {isManager ? '订单管理' : '我的订单'}
       </h1>
 
       <div className="bg-white border border-black p-6">
@@ -228,11 +402,7 @@ export default function OrdersPage() {
             <FilterOutlined className="text-gray-500" />
             <Select
               value={statusFilter}
-              onChange={(val) => {
-                setStatusFilter(val);
-                setPage(1);
-                fetchData(1, val);
-              }}
+              onChange={handleStatusChange}
               className="w-36"
               options={statusFilterOptions}
             />
@@ -249,10 +419,7 @@ export default function OrdersPage() {
             total,
             pageSize: 10,
             showTotal: (t) => `共 ${t} 条`,
-            onChange: (p) => {
-              setPage(p);
-              fetchData(p);
-            },
+            onChange: handlePageChange,
           }}
         />
       </div>
